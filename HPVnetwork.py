@@ -106,35 +106,33 @@ class HPV_network(object):
                     newG.nodes[node]['status'] = -1     
                 copy_G = newG.copy()
                 self.LTM.append(copy_G)
-# =============================================================================
-# population = 100
-# X = HPV_network(population, 7, None)
-# X.generate_BAGraph()
-# data = {'id': [np.random.randint(100000) for i in range(population)], 'age': [np.random.randint(100) for i in range(population)], 'gender': [np.random.randint(1) for i in range(population)]}
-# df = pd.DataFrame(data=data)
-# X.add_attributes_to_nodes(df)
-# X.generate_di_graph(rand=1)
-# X.run_linear_threshold_model(rand = 1, threshold_pos=0.1,threshold_neg=-0.1,inital_pos=[],inital_neg=[],num_initial_pos=1,num_initial_neg=1,time_periods=5)
-# #print(X.G.nodes.data())
-# t=0
-# for Gs in X.LTM:
-#     print('********************')
-#     print('time',t)
-#     t+=1
-#     #print(Gs.nodes.data())
-#     ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
-#     means = np.mean(ls)
-#     mask_pos = np.where(ls==1)
-#     print(means)
-#     age = np.array([Gs.nodes.data('age')[i] for i in Gs.nodes])
-#     pos_age = age[mask_pos]
-#     meansage = np.mean(pos_age)
-#     print('Num pos',len(mask_pos[0]))
-#     print('Mean age pos',meansage)
-#     print('Node 0 Att',Gs.nodes.data('status')[0])
-# #print(X.G.edges.data())
-# 
-# =============================================================================
+population = 100
+X = HPV_network(population, 7, None)
+X.generate_BAGraph()
+data = {'id': [np.random.randint(100000) for i in range(population)], 'age': [np.random.randint(100) for i in range(population)], 'gender': [np.random.randint(1) for i in range(population)]}
+df = pd.DataFrame(data=data)
+X.add_attributes_to_nodes(df)
+X.generate_di_graph(rand=1)
+X.run_linear_threshold_model(rand = 1, threshold_pos=0.1,threshold_neg=-0.1,inital_pos=[],inital_neg=[],num_initial_pos=1,num_initial_neg=1,time_periods=5)
+#print(X.G.nodes.data())
+t=0
+for Gs in X.LTM:
+    print('********************')
+    print('time',t)
+    t+=1
+    #print(Gs.nodes.data())
+    ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
+    means = np.mean(ls)
+    mask_pos = np.where(ls==1)
+    print(means)
+    age = np.array([Gs.nodes.data('age')[i] for i in Gs.nodes])
+    pos_age = age[mask_pos]
+    meansage = np.mean(pos_age)
+    print('Num pos',len(mask_pos[0]))
+    print('Mean age pos',meansage)
+    print('Node 0 Att',Gs.nodes.data('status')[0])
+#print(X.G.edges.data())
+
 def calculate_assortativity(graph, attribute):
     return nx.attribute_assortativity_coefficient(graph, attribute)
 G = nx.Graph()
