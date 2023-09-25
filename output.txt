@@ -1,0 +1,47 @@
+ontogpt pubmed-annotate -t mendelian_disease.MendelianDisease --limit 1 35387182 -o output.txt
+---
+input_text: |-
+  Title: HPV Vaccination in Kenya: The Challenges Faced and Strategies to Increase Uptake.
+  Keywords: Human Papilloma Virus (HPV); Kenya; adolescent; girls; uptake; vaccine
+  PMID: 35387182
+  Abstract: Human papilloma virus (HPV) is the leading cause of ano-genital cancers globally with cervical cancer as the top cause of cancer- related deaths in women. Over 90% of these deaths occur in low income countries where cancer control strategies remain inadequate. HPV vaccination provides protection against HPV types 16 and 18 which are responsible for approximately 70% of cervical cancer cases. The optimal age of vaccination is in the early adolescent period, before sexual debut with possible HPV infection. Studies have shown that children residing in low income settlements are at risk of early initiation of sexual activity. Adolescent vaccination programs would provide an avenue to link other health promotion strategies targeting this age group that has hitherto been left out of many health interventions in 2019, Kenya introduced HPV vaccine to be given to 10 year old girls. Uptake has been sub-optimal with only 33% of targeted population receiving the first dose in 2020 and 16% returning for the 2nd dose. While disruption of immunization programs by the COVID-19 pandemic contributed to the low coverage, other factors such as low demand fuelled by misinformation have also played a role.Copyright © 2022 Karanja-Chege.
+raw_completion_output: |-
+  name: Human Papilloma Virus (HPV)
+  description: Human papilloma virus (HPV) is the leading cause of ano-genital cancers globally with cervical cancer as the top cause of cancer- related deaths in women.
+  synonyms: HPV
+  subclass_of: 
+  symptoms: 
+  inheritance: 
+  genes: 
+  disease_onsets: 
+  label: Human Papilloma Virus (HPV)
+prompt: |+
+  From the text below, extract the following entities in the following format:
+
+  name: <the name of the disease>
+  description: <a description of the disease>
+  synonyms: <semicolon-separated list of synonymss>
+  subclass_of: <semicolon-separated list of subclass_ofs>
+  symptoms: <semicolon-separated list of symptomss>
+  inheritance: <the value for inheritance>
+  genes: <semicolon separated list of gene symbols; for example: PEX1; PEX2; PEX3>
+  disease_onsets: <semi-colon separated list of onsets at which the disease occurs, for example: adult; juvenile; first decade>
+  label: <The label (name) of the named thing>
+
+
+  Text:
+  Title: HPV Vaccination in Kenya: The Challenges Faced and Strategies to Increase Uptake.
+  Keywords: Human Papilloma Virus (HPV); Kenya; adolescent; girls; uptake; vaccine
+  PMID: 35387182
+  Abstract: Human papilloma virus (HPV) is the leading cause of ano-genital cancers globally with cervical cancer as the top cause of cancer- related deaths in women. Over 90% of these deaths occur in low income countries where cancer control strategies remain inadequate. HPV vaccination provides protection against HPV types 16 and 18 which are responsible for approximately 70% of cervical cancer cases. The optimal age of vaccination is in the early adolescent period, before sexual debut with possible HPV infection. Studies have shown that children residing in low income settlements are at risk of early initiation of sexual activity. Adolescent vaccination programs would provide an avenue to link other health promotion strategies targeting this age group that has hitherto been left out of many health interventions in 2019, Kenya introduced HPV vaccine to be given to 10 year old girls. Uptake has been sub-optimal with only 33% of targeted population receiving the first dose in 2020 and 16% returning for the 2nd dose. While disruption of immunization programs by the COVID-19 pandemic contributed to the low coverage, other factors such as low demand fuelled by misinformation have also played a role.Copyright © 2022 Karanja-Chege.
+
+  ===
+
+extracted_object:
+  id: bc9fb848-30f4-4685-96c8-35adae301e16
+  label: Human Papilloma Virus (HPV)
+  name: Human Papilloma Virus (HPV)
+  description: Human papilloma virus (HPV) is the leading cause of ano-genital cancers
+    globally with cervical cancer as the top cause of cancer- related deaths in women.
+  synonyms:
+    - HPV
