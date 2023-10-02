@@ -24,6 +24,7 @@ warnings.filterwarnings('ignore')
 # 64.I feel that other parents in my community are vaccinating their daughters against HPV
 # 65.Is there anyone you talk with regularly who had the opportunity to vaccinate their daughter against HPV but declined to do so?
 # 66.Have you ever talked about cervical cancer or HPV vaccine with a doctor / nurse / other health care worker?
+# what does 1,2,3 means?
 # =============================================================================
 
 # =============================================================================
@@ -37,7 +38,6 @@ warnings.filterwarnings('ignore')
 # 72… people who work at non-governmental organizations/civil society
 # 73… traditional healers
 # 74… religious leaders
-# higher the score, more negative
 # =============================================================================
 
 # =============================================================================
@@ -94,8 +94,18 @@ df = pd.DataFrame(data=data)
 Network.add_attributes_to_nodes(df)
 Network.add_colors([12,24])
 Network.generate_di_graph(social_connectivity)
-Network.run_linear_threshold_model(rand = 1, threshold_pos=10,threshold_neg=-10,inital_threshold=[12,24],time_periods=5)
-
+Network.run_linear_threshold_model(rand = 1, threshold_pos=3,threshold_neg=-3,inital_threshold=[12,24],time_periods=10)
+edge_weights =[]
+for edge in Network.G.edges:
+    if abs(Network.G.edges[edge]['weight'])<10:
+        edge_weights.append(Network.G.edges[edge]['weight'])
+fig = plt.figure(figsize = (6, 4),dpi=600)
+# creating the bar plot
+plt.hist(edge_weights,bins=100, color ='maroon',
+        width = 0.4)
+ 
+plt.xlabel("score")
+plt.show()
 t=0
 for Gs in Network.LTM:
     print('********************')
