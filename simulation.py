@@ -24,7 +24,7 @@ warnings.filterwarnings('ignore')
 # 64.I feel that other parents in my community are vaccinating their daughters against HPV
 # 65.Is there anyone you talk with regularly who had the opportunity to vaccinate their daughter against HPV but declined to do so?
 # 66.Have you ever talked about cervical cancer or HPV vaccine with a doctor / nurse / other health care worker?
-# what does 1,2,3 means?
+# larger --> more talktive
 # =============================================================================
 
 # =============================================================================
@@ -38,6 +38,7 @@ warnings.filterwarnings('ignore')
 # 72… people who work at non-governmental organizations/civil society
 # 73… traditional healers
 # 74… religious leaders
+# smaller -> more trust
 # =============================================================================
 
 # =============================================================================
@@ -52,30 +53,41 @@ warnings.filterwarnings('ignore')
 def social_connectivity(i,j):
     #i influence j
     # assume sec6 refelects how you can be influenced by others
-    trusti = np.nanmean(np.array([hpvdata['sec6_q67'][i],hpvdata['sec6_q68'][i],
+    trusti = np.array([hpvdata['sec6_q67'][i],hpvdata['sec6_q68'][i],
                                  hpvdata['sec6_q69'][i],hpvdata['sec6_q70'][i],
                                  hpvdata['sec6_q71'][i],hpvdata['sec6_q72'][i],
-                                 hpvdata['sec6_q73'][i],hpvdata['sec6_q74'][i]]))
-    trustj = np.nanmean(np.array([hpvdata['sec6_q67'][j],hpvdata['sec6_q68'][j],
+                                 hpvdata['sec6_q73'][i],hpvdata['sec6_q74'][i]])
+    trusti = np.nanmean(trusti,where = trusti>0)
+    trustj = np.array([hpvdata['sec6_q67'][j],hpvdata['sec6_q68'][j],
                                  hpvdata['sec6_q69'][j],hpvdata['sec6_q70'][j],
                                  hpvdata['sec6_q71'][j],hpvdata['sec6_q72'][j],
-                                 hpvdata['sec6_q73'][j],hpvdata['sec6_q74'][j]]))
-    listeni = np.nanmean(np.array([hpvdata['sec8_q89'][i],hpvdata['sec8_q93'][i]]))
-    listenj = np.nanmean(np.array([hpvdata['sec8_q89'][j],hpvdata['sec8_q93'][j]]))
-    stubborni = np.nanmean(np.array([hpvdata['sec8_q91'][i],hpvdata['sec8_q92'][i]]))
-    stubbornj = np.nanmean(np.array([hpvdata['sec8_q91'][j],hpvdata['sec8_q92'][j]]))
-    talki = np.nanmean(np.array([hpvdata['sec5_q59'][i],hpvdata['sec5_q60'][i],
+                                 hpvdata['sec6_q73'][j],hpvdata['sec6_q74'][j]])
+    trustj = np.nanmean(trustj,where = trustj>0)
+# =============================================================================
+#     listeni = np.nanmean(np.array([hpvdata['sec8_q89'][i],hpvdata['sec8_q93'][i]]))
+#     listenj = np.nanmean(np.array([hpvdata['sec8_q89'][j],hpvdata['sec8_q93'][j]]))
+#     stubborni = np.nanmean(np.array([hpvdata['sec8_q91'][i],hpvdata['sec8_q92'][i]]))
+#     stubbornj = np.nanmean(np.array([hpvdata['sec8_q91'][j],hpvdata['sec8_q92'][j]]))
+# =============================================================================
+    talki = np.array([hpvdata['sec5_q59'][i],hpvdata['sec5_q60'][i],
                                  hpvdata['sec5_q61'][i],hpvdata['sec5_q62'][i],
                                  hpvdata['sec5_q63'][i],hpvdata['sec5_q64'][i],
-                                 hpvdata['sec5_q65'][i],hpvdata['sec5_q66'][i]]))
-    talkj = np.nanmean(np.array([hpvdata['sec5_q59'][j],hpvdata['sec5_q60'][j],
+                                 hpvdata['sec5_q65'][i],hpvdata['sec5_q66'][i]])
+    talki = np.nanmean(talki,where = talki>0)
+    talkj = np.array([hpvdata['sec5_q59'][j],hpvdata['sec5_q60'][j],
                                  hpvdata['sec5_q61'][j],hpvdata['sec5_q62'][j],
                                  hpvdata['sec5_q63'][j],hpvdata['sec5_q64'][j],
-                                 hpvdata['sec5_q65'][j],hpvdata['sec5_q66'][j]]))
-    if ((talki)*(1/trustj)*(1/listenj)*stubbornj>0) or ((talki)*(1/trustj)*(1/listenj)*stubbornj<0):
-        return (talki)*(1/trustj)*(1/listenj)*stubbornj
-    else:
-        return 0
+                                 hpvdata['sec5_q65'][j],hpvdata['sec5_q66'][j]])
+    talkj = np.nanmean(talkj,where = talkj>0)
+    if talki -trustj >=0 or talki -trustj <0 :
+        return 3 + talki - trustj
+    return 3 
+# =============================================================================
+#     if ((talki)*(1/trustj)>0) or ((talki)*(1/trustj)<0):
+#         return (talki)*(1/trustj)
+#     else:
+#         return 0
+# =============================================================================
 
 ##read data
 file_path = 'hpvdata.csv'
@@ -89,18 +101,32 @@ Network.generate_BAGraph()
 #attitides
 id_ = [i for i in hpvdata.index]
 attitudes = [hpvdata['HPV_VAX_attitu_s35'][i] for i in hpvdata.index]
-data = { 'id':id_, 'initial attitude': attitudes}
+stub1 = [hpvdata['sec8_q91'][i] if hpvdata['sec8_q91'][i]>0 else 2.5 for i in hpvdata.index]
+stub2 = [hpvdata['sec8_q92'][i] if hpvdata['sec8_q92'][i]>0 else 2.5 for i in hpvdata.index]
+listen1 = [hpvdata['sec8_q89'][i] if hpvdata['sec8_q89'][i]>0 else 2.5 for i in hpvdata.index]
+listen2 = [hpvdata['sec8_q93'][i] if hpvdata['sec8_q93'][i]>0 else 2.5 for i in hpvdata.index]
+good_listen_score =[5+stub1[i]+stub2[i]-listen1[i]-listen2[i] for i in range(len(stub1))]
+# the larger the number is, less stubborn
+data = { 'id':id_, 'initial attitude': attitudes, 'listen_score':good_listen_score}
 df = pd.DataFrame(data=data)
 Network.add_attributes_to_nodes(df)
 Network.add_colors([12,24])
 Network.generate_di_graph(social_connectivity)
-Network.run_linear_threshold_model(rand = 1, threshold_pos=3,threshold_neg=-3,inital_threshold=[12,24],time_periods=10)
+Network.run_linear_threshold_model(rand = 1, threshold_pos=30,threshold_neg=-5,inital_threshold=[12,24],time_periods=10)
 edge_weights =[]
 for edge in Network.G.edges:
     if abs(Network.G.edges[edge]['weight'])<10:
         edge_weights.append(Network.G.edges[edge]['weight'])
 fig = plt.figure(figsize = (6, 4),dpi=600)
 # creating the bar plot
+plt.hist(good_listen_score,bins=100, color ='maroon',
+        width = 0.4)
+plt.xlabel("score")
+plt.show()
+
+
+fig = plt.figure(figsize = (6, 4),dpi=600)
+
 plt.hist(edge_weights,bins=100, color ='maroon',
         width = 0.4)
  
@@ -112,16 +138,15 @@ for Gs in Network.LTM:
     print('time',t)
     t+=1
     ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
-    means = np.mean(ls)
     mask_pos = np.where(ls==1)
     mask_neg = np.where(ls==-1)
-    print(means)
     age = np.array([Gs.nodes.data('initial attitude')[i] for i in Gs.nodes])
     pos_age = age[mask_pos]
-    meansage = np.mean(pos_age)
+    neg_age = age[mask_neg]
     print('Num pos',len(mask_pos[0]))
     print('Num negative',len(mask_neg[0]))
-    print('Mean initial att among pos',meansage)
+    print('Mean initial att among pos',np.mean(pos_age))
+    print('Mean initial att among neg',np.mean(neg_age))
     #node_colors = [Gs.nodes.data('color')[i] for i in range(num_household)]
     #nx.draw_networkx(Gs, with_labels=True, node_color=node_colors)
     plt.show()

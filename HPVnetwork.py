@@ -90,9 +90,9 @@ class HPV_network(object):
                                 score += newG.edges[(outnode,node)]['weight']
                             elif newG.nodes[outnode]['status']==-1:
                                 score -= newG.edges[(outnode,node)]['weight']
-                    if score >= threshold_pos:
+                    if score >= threshold_pos-newG.nodes[node]['listen_score']:
                         pos.append(node)
-                    if score <= threshold_neg:
+                    if score <= threshold_neg+newG.nodes[node]['listen_score']:
                         neg.append(node)
                 for node in pos:
                     newG.nodes[node]['status'] = 1
