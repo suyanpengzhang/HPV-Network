@@ -61,47 +61,96 @@ class HPV_network(object):
 #         nx.draw_networkx_edge_labels(self.G, pos,edge_labels=edge_labels,font_size = 10)
 #         plt.show()
 # =============================================================================
-    def run_linear_threshold_model(self,rand,threshold_pos,threshold_neg,inital_threshold,time_periods):
-        if rand == 1:
-            self.LTM = []
+    def normalize_edge_weights(self):
+        edge_weights =[]
+        for edge in self.G.edges:
+            edge_weights.append(self.G.edges[edge]['weight'])
+        max_e = max(edge_weights)
+        min_e = min(edge_weights)
+        for edge in self.G.edges:
+            self.G.edges[edge]['weight'] = (self.G.edges[edge]['weight']-min_e)/(max_e-min_e)
+    def run_linear_threshold_model_soft(self,inital_threshold,time_periods):
+        self.LTM = []
+        for node in range(len(self.G.nodes)):
+            if self.G.nodes[node]['initial attitude']<inital_threshold[0]:
+                self.G.nodes[node]['status'] = 1
+                self.G.nodes[node]['color'] = 'red'
+            elif self.G.nodes[node]['initial attitude']>=inital_threshold[1]:   
+                self.G.nodes[node]['status'] = -1
+                self.G.nodes[node]['color'] = 'blue'
+            else:
+                self.G.nodes[node]['status'] = 0
+                self.G.nodes[node]['color'] = 'green'
+        self.LTM.append(self.G)
+        newG = self.G.copy()
+        for t in range(time_periods):
+            print(t)
+            neg = []
+            pos = []
             for node in range(len(self.G.nodes)):
-                if self.G.nodes[node]['initial attitude']<inital_threshold[0]:
-                    self.G.nodes[node]['status'] = 1
-                    self.G.nodes[node]['color'] = 'red'
-                elif self.G.nodes[node]['initial attitude']>=inital_threshold[1]:   
-                    self.G.nodes[node]['status'] = -1
-                    self.G.nodes[node]['color'] = 'blue'
-                else:
-                    self.G.nodes[node]['status'] = 0
-                    self.G.nodes[node]['color'] = 'green'
-            self.LTM.append(self.G)
-            if threshold_pos == None:
-                threshold_pos = np.random.random()
-            newG = self.G.copy()
-            for t in range(time_periods):
-                print(t)
-                neg = []
-                pos = []
-                for node in range(len(self.G.nodes)):
-                    score = 0 
-                    for outnode in range(len(self.G.nodes)):
-                        if (outnode,node) in newG.edges:
-                            if newG.nodes[outnode]['status']==1:
-                                score += newG.edges[(outnode,node)]['weight']
-                            elif newG.nodes[outnode]['status']==-1:
+                score = 0 
+                for outnode in range(len(self.G.nodes)):
+                    if (outnode,node) in newG.edges:
+                        if newG.nodes[outnode]['status']==1:
+                            if newG.edges[(outnode,node)]['weight']>=(1-newG.nodes[node]['listen_score']):
                                 score -= newG.edges[(outnode,node)]['weight']
-                    if score >= threshold_pos-newG.nodes[node]['listen_score']:
-                        pos.append(node)
-                    if score <= threshold_neg+newG.nodes[node]['listen_score']:
-                        neg.append(node)
-                for node in pos:
+                        elif newG.nodes[outnode]['status']==-1:
+                            if newG.edges[(outnode,node)]['weight']>=(1-newG.nodes[node]['listen_score']):
+                                score += newG.edges[(outnode,node)]['weight']
+                newG.nodes[node]['current attitude'] += score
+            for node in range(len(newG.nodes)):
+                if newG.nodes[node]['current attitude']<inital_threshold[0]:
                     newG.nodes[node]['status'] = 1
                     newG.nodes[node]['color'] = 'red'
-                for node in neg:
-                    newG.nodes[node]['status'] = -1     
+                elif newG.nodes[node]['current attitude']>=inital_threshold[1]:   
+                    newG.nodes[node]['status'] = -1
                     newG.nodes[node]['color'] = 'blue'
-                copy_G = newG.copy()
-                self.LTM.append(copy_G)
+                else:
+                    newG.nodes[node]['status'] = 0
+                    newG.nodes[node]['color'] = 'green'
+            copy_G = newG.copy()
+            self.LTM.append(copy_G)
+    def run_linear_threshold_model(self,lambda_,threshold_pos,threshold_neg,inital_threshold,time_periods):
+        self.LTM = []
+        for node in range(len(self.G.nodes)):
+            if self.G.nodes[node]['initial attitude']<inital_threshold[0]:
+                self.G.nodes[node]['status'] = 1
+                self.G.nodes[node]['color'] = 'red'
+            elif self.G.nodes[node]['initial attitude']>=inital_threshold[1]:   
+                self.G.nodes[node]['status'] = -1
+                self.G.nodes[node]['color'] = 'blue'
+            else:
+                self.G.nodes[node]['status'] = 0
+                self.G.nodes[node]['color'] = 'green'
+        self.LTM.append(self.G)
+        if threshold_pos == None:
+            threshold_pos = np.random.random()
+        newG = self.G.copy()
+        for t in range(time_periods):
+            #print(t)
+            neg = []
+            pos = []
+            for node in range(len(self.G.nodes)):
+                score = 0 
+                for outnode in range(len(self.G.nodes)):
+                    if (outnode,node) in newG.edges:
+                        if newG.nodes[outnode]['status']==1:
+                            score += newG.edges[(outnode,node)]['weight']
+                        elif newG.nodes[outnode]['status']==-1:
+                            score -= newG.edges[(outnode,node)]['weight']
+                if np.round(score-(threshold_pos-lambda_*threshold_pos*newG.nodes[node]['listen_score']),6) >= 0:
+                    pos.append(node)
+                if np.round(score-(threshold_neg+lambda_*threshold_neg*newG.nodes[node]['listen_score']),6) <=0 :
+                    neg.append(node)
+            for node in pos:
+                newG.nodes[node]['status'] = 1
+                newG.nodes[node]['color'] = 'red'
+            for node in neg:
+                newG.nodes[node]['status'] = -1     
+                newG.nodes[node]['color'] = 'blue'
+            copy_G = newG.copy()
+            self.LTM.append(copy_G)
+            
 
 
 
