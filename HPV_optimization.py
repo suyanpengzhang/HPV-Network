@@ -83,6 +83,12 @@ num_household = len(hpvdata)
 with open("network_example/network1.pkl", "rb") as file:
     Network = pickle.load(file)
 #optimization
+max_depth = 0
+p = nx.shortest_path(Network.G)
+for i in range(len(Network.G.nodes)):
+    po = [len(p[i][j]) for j in p[i]]
+    if max(po)>max_depth:
+        max_depth = max(po)
 
 num_nodes = len(Network.G.nodes)
 eps = 0.0001*np.ones(num_nodes)
@@ -91,7 +97,7 @@ cost_vector = np.zeros(num_nodes)
 for i in Network.G.nodes:
     cost_vector[i] = Network.G.nodes[i]['initial attitude']*10
     
-budget = 1000
+budget = 0
 initial_status = [Network.G.nodes[i]['initial attitude'] for i in Network.G.nodes]
 for i in range(len(initial_status)):
     if initial_status[i]>=24:
@@ -116,6 +122,7 @@ lambda_ = 0.6
 T_plus = np.zeros(num_nodes)
 T_minus= np.zeros(num_nodes)
 
+T = 15+1
 for i in range(num_nodes):
     T_plus[i] = threshold_pos-lambda_*threshold_pos*Network.G.nodes[i]['listen_score']
     T_minus[i] = threshold_neg+lambda_*threshold_neg*Network.G.nodes[i]['listen_score']
@@ -128,21 +135,31 @@ try:
     # Create variables
     
     x = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="x") 
-    a0plus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+0_") 
-    a0minus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-0_") 
-    a1plus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+1") 
-    a1minus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-1") 
-    a1plus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+1_") 
-    a1minus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-1_") 
-    a2plus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+2") 
-    a2minus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-2") 
-    a2plus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+2_") 
-    a2minus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-2_") 
-    a3plus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+2") 
-    a3minus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-2") 
-    a3plus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+2_") 
-    a3minus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-2_") 
-    lm.setObjective(a3plus_.sum(),GRB.MAXIMIZE)
+# =============================================================================
+#     a0plus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+0_") 
+#     a0minus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-0_") 
+#     a1plus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+1") 
+#     a1minus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-1") 
+#     a1plus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+1_") 
+#     a1minus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-1_") 
+#     a2plus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+2") 
+#     a2minus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-2") 
+#     a2plus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+2_") 
+#     a2minus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-2_") 
+#     a3plus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+3") 
+#     a3minus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-3") 
+#     a3plus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+3_") 
+#     a3minus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-3_") 
+#     a4plus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+4") 
+#     a4minus = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-4") 
+#     a4plus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a+4_") 
+#     a4minus_ = lm.addMVar(num_nodes,vtype=GRB.BINARY, name="a-4_") 
+# =============================================================================
+    atplus = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a+t") 
+    atminus = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a-t") 
+    atplus_ = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a+t_") 
+    atminus_ = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a-t_") 
+    lm.setObjective(atplus_[:,T-1].sum(),GRB.MAXIMIZE)
     #lm.setObjective(a1minus_.sum(),GRB.MINIMIZE)
 
     ##initial
@@ -152,45 +169,67 @@ try:
 # =============================================================================
         #lm.addConstr(x[i] == resultsx['value'][i])
     #upper bound on x
-    lm.addConstr(x[0]==1)
-    lm.addConstr(x[58]==1)
-    lm.addConstr(x[270]==1)
-    lm.addConstr(x[348]==1)
-    lm.addConstr(x[408]==1)
-    lm.addConstr(x[557]==1)
+# =============================================================================
+#     lm.addConstr(x[0]==1)
+#     lm.addConstr(x[58]==1)
+#     lm.addConstr(x[270]==1)
+#     lm.addConstr(x[348]==1)
+#     lm.addConstr(x[408]==1)
+#     lm.addConstr(x[557]==1)
+# =============================================================================
     lm.addConstr(np.transpose(cost_vector)@x<=budget)
-    lm.addConstr(x+a0plus == a0plus_)
-    lm.addConstr(a0minus_>=a0minus-x)
-    lm.addConstr(3*(a0minus_-1) <= a0minus-x-eps)
-    #t=1
-    lm.addConstr(100*(a1plus-1) <= np.transpose(edge)@a0plus_-np.transpose(edge)@a0minus_-T_plus)
-    lm.addConstr(100*a1plus>=np.transpose(edge)@a0plus_-np.transpose(edge)@a0minus_-T_plus+eps)
-    lm.addConstr(100*(a1minus-1) <= -np.transpose(edge)@a0plus_+np.transpose(edge)@a0minus_+T_minus)
-    lm.addConstr(100*a1minus>=-np.transpose(edge)@a0plus_+np.transpose(edge)@a0minus_+T_minus+eps)
-    lm.addConstr(3*a1plus_>=a1plus-a1minus+a0plus_)
-    lm.addConstr(3*(a1plus_-1)<=a1plus-a1minus+a0plus_-eps)
-    lm.addConstr(3*a1minus_>=-a1plus+a1minus+a0minus_)
-    lm.addConstr(3*(a1minus_-1)<=-a1plus+a1minus+a0minus_-eps)
-    #t=2
-    lm.addConstr(100*(a2plus-1) <= np.transpose(edge)@a1plus_-np.transpose(edge)@a1minus_-T_plus)
-    lm.addConstr(100*a2plus>=np.transpose(edge)@a1plus_-np.transpose(edge)@a1minus_-T_plus+eps)
-    lm.addConstr(100*(a2minus-1) <= -np.transpose(edge)@a1plus_+np.transpose(edge)@a1minus_+T_minus)
-    lm.addConstr(100*a2minus>=-np.transpose(edge)@a1plus_+np.transpose(edge)@a1minus_+T_minus+eps)
-    lm.addConstr(3*a2plus_>=a2plus-a2minus+a1plus_)
-    lm.addConstr(3*(a2plus_-1)<=a2plus-a2minus+a1plus_-eps)
-    lm.addConstr(3*a2minus_>=-a2plus+a2minus+a1minus_)
-    lm.addConstr(3*(a2minus_-1)<=-a2plus+a2minus+a1minus_-eps)
-    #t=3
-    lm.addConstr(100*(a3plus-1) <= np.transpose(edge)@a2plus_-np.transpose(edge)@a2minus_-T_plus)
-    lm.addConstr(100*a3plus>=np.transpose(edge)@a2plus_-np.transpose(edge)@a2minus_-T_plus+eps)
-    lm.addConstr(100*(a3minus-1) <= -np.transpose(edge)@a2plus_+np.transpose(edge)@a2minus_+T_minus)
-    lm.addConstr(100*a3minus>=-np.transpose(edge)@a2plus_+np.transpose(edge)@a2minus_+T_minus+eps)
-    lm.addConstr(3*a3plus_>=a3plus-a3minus+a2plus_)
-    lm.addConstr(3*(a3plus_-1)<=a3plus-a3minus+a2plus_-eps)
-    lm.addConstr(3*a3minus_>=-a3plus+a3minus+a2minus_)
-    lm.addConstr(3*(a3minus_-1)<=-a3plus+a3minus+a2minus_-eps)
+    lm.addConstr(x+a0plus == atplus_[:,0])
+    lm.addConstr(atminus_[:,0]>=a0minus-x)
+    lm.addConstr(3*(atminus_[:,0]-1) <= a0minus-x-eps)
+    for  t in range(1,T):
+        lm.addConstr(100*(atplus[:,t]-1) <= np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus)
+        lm.addConstr(100*atplus[:,t]>=np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus+eps)
+        lm.addConstr(100*(atminus[:,t]-1) <= -np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus)
+        lm.addConstr(100*atminus[:,t]>=-np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus+eps)
+        lm.addConstr(3*atplus_[:,t]>=atplus[:,t]-atminus[:,t]+atplus_[:,t-1])
+        lm.addConstr(3*(atplus_[:,t]-1)<=atplus[:,t]-atminus[:,t]+atplus_[:,t-1]-eps)
+        lm.addConstr(3*atminus_[:,t]>=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1])
+        lm.addConstr(3*(atminus_[:,t]-1)<=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1]-eps)
+# =============================================================================
+#     #t=1
+#     lm.addConstr(100*(a1plus-1) <= np.transpose(edge)@a0plus_-np.transpose(edge)@a0minus_-T_plus)
+#     lm.addConstr(100*a1plus>=np.transpose(edge)@a0plus_-np.transpose(edge)@a0minus_-T_plus+eps)
+#     lm.addConstr(100*(a1minus-1) <= -np.transpose(edge)@a0plus_+np.transpose(edge)@a0minus_+T_minus)
+#     lm.addConstr(100*a1minus>=-np.transpose(edge)@a0plus_+np.transpose(edge)@a0minus_+T_minus+eps)
+#     lm.addConstr(3*a1plus_>=a1plus-a1minus+a0plus_)
+#     lm.addConstr(3*(a1plus_-1)<=a1plus-a1minus+a0plus_-eps)
+#     lm.addConstr(3*a1minus_>=-a1plus+a1minus+a0minus_)
+#     lm.addConstr(3*(a1minus_-1)<=-a1plus+a1minus+a0minus_-eps)
+#     #t=2
+#     lm.addConstr(100*(a2plus-1) <= np.transpose(edge)@a1plus_-np.transpose(edge)@a1minus_-T_plus)
+#     lm.addConstr(100*a2plus>=np.transpose(edge)@a1plus_-np.transpose(edge)@a1minus_-T_plus+eps)
+#     lm.addConstr(100*(a2minus-1) <= -np.transpose(edge)@a1plus_+np.transpose(edge)@a1minus_+T_minus)
+#     lm.addConstr(100*a2minus>=-np.transpose(edge)@a1plus_+np.transpose(edge)@a1minus_+T_minus+eps)
+#     lm.addConstr(3*a2plus_>=a2plus-a2minus+a1plus_)
+#     lm.addConstr(3*(a2plus_-1)<=a2plus-a2minus+a1plus_-eps)
+#     lm.addConstr(3*a2minus_>=-a2plus+a2minus+a1minus_)
+#     lm.addConstr(3*(a2minus_-1)<=-a2plus+a2minus+a1minus_-eps)
+#     #t=3
+#     lm.addConstr(100*(a3plus-1) <= np.transpose(edge)@a2plus_-np.transpose(edge)@a2minus_-T_plus)
+#     lm.addConstr(100*a3plus>=np.transpose(edge)@a2plus_-np.transpose(edge)@a2minus_-T_plus+eps)
+#     lm.addConstr(100*(a3minus-1) <= -np.transpose(edge)@a2plus_+np.transpose(edge)@a2minus_+T_minus)
+#     lm.addConstr(100*a3minus>=-np.transpose(edge)@a2plus_+np.transpose(edge)@a2minus_+T_minus+eps)
+#     lm.addConstr(3*a3plus_>=a3plus-a3minus+a2plus_)
+#     lm.addConstr(3*(a3plus_-1)<=a3plus-a3minus+a2plus_-eps)
+#     lm.addConstr(3*a3minus_>=-a3plus+a3minus+a2minus_)
+#     lm.addConstr(3*(a3minus_-1)<=-a3plus+a3minus+a2minus_-eps)
+#     #t=4
+#     lm.addConstr(100*(a4plus-1) <= np.transpose(edge)@a3plus_-np.transpose(edge)@a3minus_-T_plus)
+#     lm.addConstr(100*a4plus>=np.transpose(edge)@a3plus_-np.transpose(edge)@a3minus_-T_plus+eps)
+#     lm.addConstr(100*(a4minus-1) <= -np.transpose(edge)@a3plus_+np.transpose(edge)@a3minus_+T_minus)
+#     lm.addConstr(100*a4minus>=-np.transpose(edge)@a3plus_+np.transpose(edge)@a3minus_+T_minus+eps)
+#     lm.addConstr(3*a4plus_>=a4plus-a4minus+a3plus_)
+#     lm.addConstr(3*(a4plus_-1)<=a4plus-a4minus+a3plus_-eps)
+#     lm.addConstr(3*a4minus_>=-a4plus+a4minus+a3minus_)
+#     lm.addConstr(3*(a4minus_-1)<=-a4plus+a4minus+a3minus_-eps)
+# =============================================================================
     # Optimize model
-    #lm.setParam('TimeLimit', 10)
+    lm.setParam('TimeLimit', 10)
     lm.Params.Threads = 18
     lm.Params.OutputFlag = 1
     lm.Params.LogToConsole = 1
@@ -230,7 +269,7 @@ for i in sol:
     print('linked to neg: ',countminus)
     print('linked to neu: ',countneu)
 print('********************')
-Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=10,threshold_neg=-1,inital_threshold=[12,24],time_periods=3)
+Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=10,threshold_neg=-1,inital_threshold=[12,24],time_periods=10)
 
 np.transpose(edge[:,187])@a0plus-np.transpose(edge[:,187])@a0minus-T_plus[187]
 t=0
