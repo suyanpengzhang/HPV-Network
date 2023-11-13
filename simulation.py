@@ -5,7 +5,6 @@ Created on Sun Sep 24 13:03:21 2023
 
 @author: suyanpengzhang
 """
-
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -14,6 +13,7 @@ import random
 import HPVnetwork as HPVN
 import warnings
 import seaborn as sns
+import pickle
 warnings.filterwarnings('ignore')
 # =============================================================================
 # SECTION 5: HPV VACCINE SOCIAL NORMS
@@ -78,6 +78,7 @@ def social_connectivity(i,j):
 file_path = 'hpvdata.csv'
 hpvdata = pd.read_csv(file_path)
 hpvdata = hpvdata.dropna(subset=['HPV_VAX_attitu_s35'])
+#hpvdata = hpvdata.sample(30)
 #compute for normalization
 max_trust = 4
 min_trust = 1   
@@ -112,6 +113,7 @@ Network.add_attributes_to_nodes(df)
 Network.add_colors([12,24])
 Network.generate_di_graph(social_connectivity)
 Network.normalize_edge_weights()
+#pickle.dump(Network, open("simple_net.pkl", "wb"))
 #Network.run_linear_threshold_model_soft(inital_threshold=[12,24],time_periods=20)
 for _lambda in np.arange(0,1.1,0.1):
     print(_lambda)
