@@ -17,6 +17,26 @@ import seaborn as sns
 import gurobipy as gp
 from gurobipy import GRB
 import pickle
+import os
+from gurobipy import Env, GRB
+from collections import deque
+
+
+# Replace this with the path to your actual license file
+path_to_license_file = '/Users/suyanpengzhang/gurobi.lic'
+
+# Set the environment variable
+os.environ['GRB_LICENSE_FILE'] = path_to_license_file
+
+# Now you can initialize the Gurobi environment
+try:
+    # Creating an environment object will automatically look for a license file
+    env = Env()
+    # Continue with your Gurobi model setup and optimization...
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+
 
 warnings.filterwarnings('ignore')
 def social_connectivity(i,j):
@@ -83,6 +103,57 @@ num_household = len(hpvdata)
 with open("network_example/network1.pkl", "rb") as file:
     Network = pickle.load(file)
 #optimization
+# =============================================================================
+# with open("simple_net5.pkl", "rb") as file:
+#     Network = pickle.load(file)
+# =============================================================================
+
+Levels = {}
+edges = list(Network.G.edges)
+nodes = list(Network.G.nodes)
+pos_thre = 12
+neg_thre = 24
+
+def edges_to_adjacency_list(edges):
+    graph = {}
+    for (src, dst) in edges:
+        if src not in graph:
+            graph[src] = []
+        if dst not in graph:
+            graph[dst] = []
+        graph[src].append(dst)
+        graph[dst].append(src)  # Assuming it's an undirected graph
+    for i in graph:
+        graph[i] = list(set(graph[i]))
+    return graph
+
+def find_routes(graph, start, path=[]):
+    path = path + [start]
+    if len(path) == len(graph):
+        return [path]
+    paths = []
+    for node in graph[start]:
+        if node not in path:
+            newpaths = find_routes(graph, node, path)
+            for newpath in newpaths:
+                paths.append(newpath)
+    return paths
+
+
+for node in nodes:
+    if Network.G.nodes[node]['initial attitude']<12 or Network.G.nodes[node]['initial attitude']>=24:
+        Levels[node] = 1
+    else:
+        Levels[node] = 0
+for i in Levels:
+    if Levels[i]==1:
+        if i == 999:
+            graph = edges_to_adjacency_list(list(Network.G.edges))
+            all_routes = find_routes(graph, i)
+            #print(all_routes)
+        
+print(len(edges))
+
 max_depth = 0
 p = nx.shortest_path(Network.G)
 for i in range(len(Network.G.nodes)):
