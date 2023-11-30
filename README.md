@@ -15,7 +15,8 @@ The BA network constructed in this analysis represents households' attitudes tow
 ## Optimization Formulation
 The optimization problem is formulated to maximize the number of households with a positive attitude towards HPV vaccination within a given budget, considering the varying costs of changing attitudes based on initial stance. The formulation is as follows:
 
-[Include the optimization problem image or its markdown-formatted code here]
+![Optimization Problem](path-to-equation-image.png)
+
 
 
 ## Technology Stack
