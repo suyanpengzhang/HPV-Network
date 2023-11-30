@@ -25,7 +25,7 @@ import gurobipy as gp
 from gurobipy import GRB
 import pickle
 
-with open("simple_net.pkl", "rb") as file:
+with open("network_example/simple_net.pkl", "rb") as file:
     Network = pickle.load(file)
 
 Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=2,threshold_neg=-0.3,inital_threshold=[12,20],time_periods=10)
