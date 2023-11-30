@@ -199,7 +199,7 @@ lambda_ = 0.6
 T_plus = np.zeros(num_nodes)
 T_minus= np.zeros(num_nodes)
 
-T = 3
+T = 8
 for i in range(num_nodes):
     T_plus[i] = threshold_pos-lambda_*threshold_pos*Network.G.nodes[i]['listen_score']
     T_minus[i] = threshold_neg+lambda_*threshold_neg*Network.G.nodes[i]['listen_score']
@@ -231,7 +231,7 @@ try:
         lm.addConstr(3*atminus_[:,t]>=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1])
         lm.addConstr(3*(atminus_[:,t]-1)<=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1]-eps)
     # Optimize model
-    lm.setParam('TimeLimit', 10)
+    #lm.setParam('TimeLimit', 10)
     lm.Params.Threads = 18
     lm.Params.OutputFlag = 1
     lm.Params.LogToConsole = 1
@@ -270,6 +270,7 @@ for i in sol:
     print('linked to pos: ',countplus)
     print('linked to neg: ',countminus)
     print('linked to neu: ',countneu)
+    print('eighenvalue: ',countneu)
 print('********************')
 Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=10,threshold_neg=-1,inital_threshold=[12,24],time_periods=10)
 
