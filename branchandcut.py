@@ -64,7 +64,7 @@ def social_connectivity(i,j):
     return 1
 
 ##read data
-file_path = 'hpvdata.csv'
+file_path = 'Data/hpvdata.csv'
 hpvdata = pd.read_csv(file_path)
 hpvdata = hpvdata.dropna(subset=['HPV_VAX_attitu_s35'])
 #compute for normalization
@@ -79,36 +79,9 @@ min_stub = 1
 
 num_household = len(hpvdata)
 
-# =============================================================================
-# Network = HPVN.HPV_network(num_household, 7, None) #7 is num edge attached
-# Network.generate_BAGraph()
-# #attitides
-# id_ = [i for i in hpvdata.index]
-# attitudes = [hpvdata['HPV_VAX_attitu_s35'][i] for i in hpvdata.index]
-# # =============================================================================
-# # stub1 = [hpvdata['sec8_q91'][i] if hpvdata['sec8_q91'][i]>0 else 2.5 for i in hpvdata.index]
-# # =============================================================================
-# stub2 = [(hpvdata['sec8_q92'][i]-min_stub)/(max_stub-min_stub) if hpvdata['sec8_q92'][i]>0 else (np.nanmean(hpvdata[hpvdata['sec8_q92']>0]['sec8_q92'])-min_stub)/(max_stub-min_stub) for i in hpvdata.index]
-# # =============================================================================
-# # listen1 = [hpvdata['sec8_q89'][i] if hpvdata['sec8_q89'][i]>0 else 2.5 for i in hpvdata.index]
-# # listen2 = [hpvdata['sec8_q93'][i] if hpvdata['sec8_q93'][i]>0 else 2.5 for i in hpvdata.index]
-# # =============================================================================
-# good_listen_score =[stub2[i]for i in range(len(stub2))]
-# # the larger the number is, less stubborn
-# data = { 'id':id_, 'initial attitude': attitudes,'current attitude': attitudes, 'listen_score':good_listen_score}
-# df = pd.DataFrame(data=data)
-# Network.add_attributes_to_nodes(df)
-# Network.add_colors([12,24])
-# Network.generate_di_graph(social_connectivity)
-# Network.normalize_edge_weights()
-# =============================================================================
+
 with open("network_example/network1.pkl", "rb") as file:
     Network = pickle.load(file)
-#optimization
-# =============================================================================
-# with open("simple_net5.pkl", "rb") as file:
-#     Network = pickle.load(file)
-# =============================================================================
 
 Levels = {}
 edges = list(Network.G.edges)
@@ -118,45 +91,7 @@ nodes = list(Network.G.nodes)
 pos_thre = 12
 neg_thre = 24
 
-# =============================================================================
-# def edges_to_adjacency_list(edges):
-#     graph = {}
-#     for (src, dst) in edges:
-#         if src not in graph:
-#             graph[src] = []
-#         if dst not in graph:
-#             graph[dst] = []
-#         graph[src].append(dst)
-#         graph[dst].append(src)  # Assuming it's an undirected graph
-#     for i in graph:
-#         graph[i] = list(set(graph[i]))
-#     return graph
-# 
-# def find_routes(graph, start, path=[]):
-#     path = path + [start]
-#     if len(path) == len(graph):
-#         return [path]
-#     paths = []
-#     for node in graph[start]:
-#         if node not in path:
-#             newpaths = find_routes(graph, node, path)
-#             for newpath in newpaths:
-#                 paths.append(newpath)
-#     return paths
-# 
-# 
-# for node in nodes:
-#     if Network.G.nodes[node]['initial attitude']<12 or Network.G.nodes[node]['initial attitude']>=24:
-#         Levels[node] = 1
-#     else:
-#         Levels[node] = 0
-# for i in Levels:
-#     if Levels[i]==1:
-#         if i == 999:
-#             graph = edges_to_adjacency_list(list(Network.G.edges))
-#             all_routes = find_routes(graph, i)
-#             #print(all_routes)
-# =============================================================================
+
         
 print(len(edges))
 
@@ -200,6 +135,9 @@ T_plus = np.zeros(num_nodes)
 T_minus= np.zeros(num_nodes)
 
 T = 8
+
+
+
 for i in range(num_nodes):
     T_plus[i] = threshold_pos-lambda_*threshold_pos*Network.G.nodes[i]['listen_score']
     T_minus[i] = threshold_neg+lambda_*threshold_neg*Network.G.nodes[i]['listen_score']
@@ -235,6 +173,29 @@ try:
     lm.Params.Threads = 18
     lm.Params.OutputFlag = 1
     lm.Params.LogToConsole = 1
+    def myheuristic(model, where):
+        if where == GRB.Callback.MIPNODE:
+            # Check if it is a feasible solution node
+            if model.cbGet(GRB.Callback.MIPNODE_STATUS) == GRB.OPTIMAL:
+                # Get the current relaxation solution
+                node_rel_vals = model.cbGetNodeRel(x)
+
+                # Implement your heuristic logic here
+                if np.transpose(cost_vector)@node_rel_vals-budget<=150:
+                    # Set the value of z in the MIP node
+                    new_vals = node_rel_vals.copy()
+                    avail_cost = max(cost_vector[np.where((np.array(node_rel_vals) == 0) & (np.array(cost_vector) <= 150)& (np.array(a0plus) == 0))])
+                    new_plus = np.where((np.array(node_rel_vals) == 0) & (np.array(cost_vector) == avail_cost)& (np.array(a0plus) == 0))
+                    #new_vals[new_plus] = 1  # Set z to 1
+# =============================================================================
+#                     print('oiciwneonceocewneocwin')
+#                     print(new_plus[0][0])
+# =============================================================================
+                    model.cbSetSolution(x[new_plus[0][0]], 1)
+
+                    # Try to use the current node's solution
+                    model.cbUseSolution()
+    #lm.optimize(myheuristic)
     lm.optimize()
     sol = []
     count=0
@@ -290,7 +251,5 @@ for Gs in Network.LTM:
     print('Num negative',len(mask_neg[0]))
     print('Mean current att among pos',np.mean(pos_age))
     print('Mean current att among neg',np.mean(neg_age))
-    #node_colors = [Gs.nodes.data('color')[i] for i in range(num_household)]
-    #nx.draw_networkx(Gs, with_labels=True, node_color=node_colors)
     plt.show()
 

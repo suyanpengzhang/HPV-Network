@@ -50,7 +50,6 @@ for Gs in Network.LTM:
     #nx.draw_networkx(Gs, with_labels=True, node_color=node_colors)
     plt.show()
 
-# Let's assume you have three networkx graphs already created: G1, G2, G3
 # For example:
 G1 = Network.LTM[0]
 G2 = Network.LTM[1]
@@ -82,7 +81,6 @@ positions8, node_statuses8, edge_weights8 = extract_graph_data(G8)
 positions9, node_statuses9, edge_weights9 = extract_graph_data(G9)
 positions10, node_statuses10, edge_weights10 = extract_graph_data(G10)
 
-# Now you can use positions and edge_weights to draw your graphs with OpenGL
 # Define the node class
 class Node:
     def __init__(self, position,status):
