@@ -13,7 +13,7 @@ This repository hosts an innovative project that analyzes household survey data 
 The BA network constructed in this analysis represents households' attitudes toward HPV vaccination. Each node represents a household and can have one of three states: positive, negative, or neutral. Nodes transition from neutral to positive or negative based on the thresholds and cannot revert to neutral. The network's edge weights and initialization are determined by the survey data, and the connections between nodes are generated randomly. The dynamics of the network is modeled using the linear threshold model.
 
 ## OpenGL Simulation Visualization 
-![Vis1](simulation.pdf)
+![Vis1](simulation.png)
 
 ## Optimization Formulation
 The optimization problem is formulated to maximize the number of households with a positive attitude towards HPV vaccination within a given budget, considering the varying costs of changing attitudes based on initial stance. The formulation is as follows:
