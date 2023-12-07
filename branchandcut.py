@@ -103,13 +103,13 @@ for i in range(len(Network.G.nodes)):
         max_depth = max(po)
 
 num_nodes = len(Network.G.nodes)
-eps = 0.0001*np.ones(num_nodes)
+eps = 0.0001
 
 cost_vector = np.zeros(num_nodes)
 for i in Network.G.nodes:
     cost_vector[i] = Network.G.nodes[i]['initial attitude']*10
     
-budget = 1000
+budget = 5000
 initial_status = [Network.G.nodes[i]['initial attitude'] for i in Network.G.nodes]
 for i in range(len(initial_status)):
     if initial_status[i]>=24:
@@ -142,7 +142,8 @@ for i in range(num_nodes):
     T_plus[i] = threshold_pos-lambda_*threshold_pos*Network.G.nodes[i]['listen_score']
     T_minus[i] = threshold_neg+lambda_*threshold_neg*Network.G.nodes[i]['listen_score']
 
-
+with open("sol_4000_.pkl", "rb") as file:
+    sol1000 = pickle.load(file)
 try:
     # Create a new model
     lm = gp.Model("lm")
@@ -154,20 +155,24 @@ try:
     atminus = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a-t") 
     atplus_ = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a+t_") 
     atminus_ = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a-t_") 
-    lm.setObjective(atplus_[:,T-1].sum(),GRB.MAXIMIZE)
+    lm.setObjective(sum(atplus_[:,T-1]),GRB.MAXIMIZE)
+    for i in range(num_nodes):
+        if i in sol1000:
+            lm.addConstr(x[i]==1)
     lm.addConstr(np.transpose(cost_vector)@x<=budget)
-    lm.addConstr(x+a0plus == atplus_[:,0])
-    lm.addConstr(atminus_[:,0]>=a0minus-x)
-    lm.addConstr(3*(atminus_[:,0]-1) <= a0minus-x-eps)
+    lm.addConstr(3*atplus_[:,0]>=a0plus+x)
+    lm.addConstr(3*(atplus_[:,0]-np.ones(num_nodes))<=a0plus+x-eps)
+    lm.addConstr(3*atminus_[:,0]>=a0minus-x)
+    lm.addConstr(3*(atminus_[:,0]-np.ones(num_nodes)) <= a0minus-x-eps)
     for  t in range(1,T):
-        lm.addConstr(100*(atplus[:,t]-1) <= np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus)
-        lm.addConstr(100*atplus[:,t]>=np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus+eps)
-        lm.addConstr(100*(atminus[:,t]-1) <= -np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus)
-        lm.addConstr(100*atminus[:,t]>=-np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus+eps)
+        lm.addConstr(1000*(atplus[:,t]-np.ones(num_nodes)) <= np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus)
+        lm.addConstr(1000*atplus[:,t]>=np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus+eps)
+        lm.addConstr(1000*(atminus[:,t]-np.ones(num_nodes)) <= -np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus)
+        lm.addConstr(1000*atminus[:,t]>=-np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus+eps)
         lm.addConstr(3*atplus_[:,t]>=atplus[:,t]-atminus[:,t]+atplus_[:,t-1])
-        lm.addConstr(3*(atplus_[:,t]-1)<=atplus[:,t]-atminus[:,t]+atplus_[:,t-1]-eps)
+        lm.addConstr(3*(atplus_[:,t]-np.ones(num_nodes))<=atplus[:,t]-atminus[:,t]+atplus_[:,t-1]-eps)
         lm.addConstr(3*atminus_[:,t]>=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1])
-        lm.addConstr(3*(atminus_[:,t]-1)<=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1]-eps)
+        lm.addConstr(3*(atminus_[:,t]-np.ones(num_nodes))<=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1]-eps)
     # Optimize model
     #lm.setParam('TimeLimit', 10)
     lm.Params.Threads = 18
@@ -196,6 +201,9 @@ try:
                     # Try to use the current node's solution
                     model.cbUseSolution()
     #lm.optimize(myheuristic)
+    #lm.Params.MIPFocus = 2
+    #lm.Params.NoRelHeurTime = 30
+    lm.setParam('TimeLimit', 1800)
     lm.optimize()
     sol = []
     count=0
@@ -203,8 +211,18 @@ try:
     for v in lm.getVars():
         if count<num_nodes:
             if v.X == 1:
-                print('%s %g' % (v.VarName, v.X))
-                sol.append(count)
+                #print('%s %g' % (v.VarName, v.X))                
+                sol.append(count)     
+# =============================================================================
+#         if v.VarName[0:4] == "a-t_":
+#             if v.X == 1:
+#                 print('%s %g' % (v.VarName, v.X))  
+# =============================================================================
+# =============================================================================
+#         if v.VarName[0:4] == "a+t_":
+#             if v.X == 0:
+#                 print('%s %g' % (v.VarName, v.X))  
+# =============================================================================
         count+=1
     print('Obj: %g' % lm.ObjVal)
     
@@ -215,41 +233,49 @@ except AttributeError:
     print('Encountered an attribute error')
 print('********************')    
 print('Selections')
-for i in sol:
-    print('attitude: ',Network.G.nodes[i]['initial attitude'])
-    countplus = 0
-    countminus = 0
-    countneu = 0
-    for j in Network.G.nodes:
-        if (i,j) in Network.G.edges:
-            if a0plus[j]==1:
-                countplus +=1
-            elif a0minus[j] == 1:
-                countminus +=1
-            else:
-                countneu +=1
-    print('linked to pos: ',countplus)
-    print('linked to neg: ',countminus)
-    print('linked to neu: ',countneu)
-    print('eighenvalue: ',countneu)
+with open('sol_5000_.pkl', 'wb') as f:
+    pickle.dump(sol, f)
+# =============================================================================
+# for i in sol:
+#     print('attitude: ',Network.G.nodes[i]['initial attitude'])
+#     countplus = 0
+#     countminus = 0
+#     countneu = 0
+#     for j in Network.G.nodes:
+#         if (i,j) in Network.G.edges:
+#             if a0plus[j]==1:
+#                 countplus +=1
+#             elif a0minus[j] == 1:
+#                 countminus +=1
+#             else:
+#                 countneu +=1
+#     print('linked to pos: ',countplus)
+#     print('linked to neg: ',countminus)
+#     print('linked to neu: ',countneu)
+#     print('eighenvalue: ',countneu)
+# =============================================================================
 print('********************')
-Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=10,threshold_neg=-1,inital_threshold=[12,24],time_periods=10)
-
-np.transpose(edge[:,187])@a0plus-np.transpose(edge[:,187])@a0minus-T_plus[187]
-t=0
-for Gs in Network.LTM:
-    print('********************')
-    print('time',t)
-    t+=1
-    ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
-    mask_pos = np.where(ls==1)
-    mask_neg = np.where(ls==-1)
-    age = np.array([Gs.nodes.data('current attitude')[i] for i in Gs.nodes])
-    pos_age = age[mask_pos]
-    neg_age = age[mask_neg]
-    print('Num pos',len(mask_pos[0]))
-    print('Num negative',len(mask_neg[0]))
-    print('Mean current att among pos',np.mean(pos_age))
-    print('Mean current att among neg',np.mean(neg_age))
-    plt.show()
+# =============================================================================
+# Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=10,threshold_neg=-1,inital_threshold=[12,24],time_periods=10)
+# 
+# np.transpose(edge[:,187])@a0plus-np.transpose(edge[:,187])@a0minus-T_plus[187]
+# =============================================================================
+# =============================================================================
+# t=0
+# for Gs in Network.LTM:
+#     print('********************')
+#     print('time',t)
+#     t+=1
+#     ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
+#     mask_pos = np.where(ls==1)
+#     mask_neg = np.where(ls==-1)
+#     age = np.array([Gs.nodes.data('current attitude')[i] for i in Gs.nodes])
+#     pos_age = age[mask_pos]
+#     neg_age = age[mask_neg]
+#     print('Num pos',len(mask_pos[0]))
+#     print('Num negative',len(mask_neg[0]))
+#     print('Mean current att among pos',np.mean(pos_age))
+#     print('Mean current att among neg',np.mean(neg_age))
+#     plt.show()
+# =============================================================================
 

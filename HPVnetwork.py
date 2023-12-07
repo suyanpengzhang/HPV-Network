@@ -69,7 +69,7 @@ class HPV_network(object):
         min_e = min(edge_weights)
         for edge in self.G.edges:
             self.G.edges[edge]['weight'] = (self.G.edges[edge]['weight']-min_e)/(max_e-min_e)
-    def run_linear_threshold_model_soft(self,inital_threshold,time_periods):
+    def run_linear_threshold_model_soft(self,inital_threshold,time_periods,x):
         self.LTM = []
         for node in range(len(self.G.nodes)):
             if self.G.nodes[node]['initial attitude']<inital_threshold[0]:
@@ -110,10 +110,13 @@ class HPV_network(object):
                     newG.nodes[node]['color'] = 'green'
             copy_G = newG.copy()
             self.LTM.append(copy_G)
-    def run_linear_threshold_model(self,lambda_,threshold_pos,threshold_neg,inital_threshold,time_periods):
+    def run_linear_threshold_model(self,lambda_,threshold_pos,threshold_neg,inital_threshold,time_periods,x):
         self.LTM = []
         for node in range(len(self.G.nodes)):
-            if self.G.nodes[node]['initial attitude']<inital_threshold[0]:
+            if node in x:
+                self.G.nodes[node]['status'] = 1
+                self.G.nodes[node]['color'] = 'red'
+            elif self.G.nodes[node]['initial attitude']<inital_threshold[0]:
                 self.G.nodes[node]['status'] = 1
                 self.G.nodes[node]['color'] = 'red'
             elif self.G.nodes[node]['initial attitude']>=inital_threshold[1]:   
