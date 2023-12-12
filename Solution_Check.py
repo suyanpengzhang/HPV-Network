@@ -21,9 +21,16 @@ import os
 from gurobipy import Env, GRB
 from collections import deque
 from numpy import linalg as LA
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
+
 
 with open("network_example/network1.pkl", "rb") as file:
     Network = pickle.load(file)
+    
+with open("sol_20_uniform.pkl", "rb") as file:
+    soluniform = pickle.load(file)
 with open("sols/sol_1000.pkl", "rb") as file:
     sol1000 = pickle.load(file)
 with open("sols/sol_2000.pkl", "rb") as file:
@@ -63,6 +70,7 @@ T = 8
 for i in range(num_nodes):
     T_plus[i] = threshold_pos-lambda_*threshold_pos*Network.G.nodes[i]['listen_score']
     T_minus[i] = threshold_neg+lambda_*threshold_neg*Network.G.nodes[i]['listen_score']
+print(T_plus)
 edge = np.zeros((num_nodes,num_nodes))
 for i in range(num_nodes):
     for j in range(num_nodes):
@@ -73,303 +81,364 @@ threshold_pos = 10
 threshold_neg = -1
 lambda_ = 0.6
 
-T_plus = np.zeros(num_nodes)
-T_minus= np.zeros(num_nodes)
-print('1000\n',sol1000)
-plus_ = []
-minus_ = []
-neu_ = []
-attitude_ = []
-edge_weights_= []
-eigenvalues_ = []
-for i in sol1000:
-    countplus = 0
-    countminus = 0
-    countneu = 0
-    for j in Network.G.nodes:
-        if (i,j) in Network.G.edges:
-            if a0plus[j]==1:
-                countplus +=1
-            elif a0minus[j] == 1:
-                countminus +=1
-            else:
-                countneu +=1
-    plus_.append(countplus)
-    minus_.append(countminus)
-    neu_.append(countneu)
-    attitude_.append(Network.G.nodes[i]['initial attitude'])
-    edge_weights_.append(sum(edge[i]))
-    eigenvalues_.append(eigenvalues[i])
-
-print('avg links to pos',np.mean(plus_))
-print('avg links to minus',np.mean(minus_))
-print('avg links to neutral',np.mean(neu_))
-print('avg attitude score',np.mean(attitude_))
-print('avg outgoing edgeweights',np.mean(edge_weights_))
-print('avg eigenvalues',np.mean(eigenvalues_))
-print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
-
-print('2000\n',sol2000)
-
-plus_ = []
-minus_ = []
-neu_ = []
-attitude_ = []
-edge_weights_= []
-eigenvalues_ = []
-for i in sol2000:
-    countplus = 0
-    countminus = 0
-    countneu = 0
-    for j in Network.G.nodes:
-        if (i,j) in Network.G.edges:
-            if a0plus[j]==1:
-                countplus +=1
-            elif a0minus[j] == 1:
-                countminus +=1
-            else:
-                countneu +=1
-    plus_.append(countplus)
-    minus_.append(countminus)
-    neu_.append(countneu)
-    attitude_.append(Network.G.nodes[i]['initial attitude'])
-    edge_weights_.append(sum(edge[i]))
-    eigenvalues_.append(eigenvalues[i])
-
-print('avg links to pos',np.mean(plus_))
-print('avg links to minus',np.mean(minus_))
-print('avg links to neutral',np.mean(neu_))
-print('avg attitude score',np.mean(attitude_))
-print('avg outgoing edgeweights',np.mean(edge_weights_))
-print('avg eigenvalues',np.mean(eigenvalues_))
-print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
-
-print('3000\n',sol3000)
-
-plus_ = []
-minus_ = []
-neu_ = []
-attitude_ = []
-edge_weights_= []
-eigenvalues_ = []
-for i in sol3000:
-    countplus = 0
-    countminus = 0
-    countneu = 0
-    for j in Network.G.nodes:
-        if (i,j) in Network.G.edges:
-            if a0plus[j]==1:
-                countplus +=1
-            elif a0minus[j] == 1:
-                countminus +=1
-            else:
-                countneu +=1
-    plus_.append(countplus)
-    minus_.append(countminus)
-    neu_.append(countneu)
-    attitude_.append(Network.G.nodes[i]['initial attitude'])
-    edge_weights_.append(sum(edge[i]))
-    eigenvalues_.append(eigenvalues[i])
-
-print('avg links to pos',np.mean(plus_))
-print('avg links to minus',np.mean(minus_))
-print('avg links to neutral',np.mean(neu_))
-print('avg attitude score',np.mean(attitude_))
-print('avg outgoing edgeweights',np.mean(edge_weights_))
-print('avg eigenvalues',np.mean(eigenvalues_))
-print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
-
-print('4000\n',sol4000)
-
-plus_ = []
-minus_ = []
-neu_ = []
-attitude_ = []
-edge_weights_= []
-eigenvalues_ = []
-for i in sol4000:
-    countplus = 0
-    countminus = 0
-    countneu = 0
-    for j in Network.G.nodes:
-        if (i,j) in Network.G.edges:
-            if a0plus[j]==1:
-                countplus +=1
-            elif a0minus[j] == 1:
-                countminus +=1
-            else:
-                countneu +=1
-    plus_.append(countplus)
-    minus_.append(countminus)
-    neu_.append(countneu)
-    attitude_.append(Network.G.nodes[i]['initial attitude'])
-    edge_weights_.append(sum(edge[i]))
-    eigenvalues_.append(eigenvalues[i])
-
-print('avg links to pos',np.mean(plus_))
-print('avg links to minus',np.mean(minus_))
-print('avg links to neutral',np.mean(neu_))
-print('avg attitude score',np.mean(attitude_))
-print('avg outgoing edgeweights',np.mean(edge_weights_))
-print('avg eigenvalues',np.mean(eigenvalues_))
-print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
-
-print('5000\n',sol5000)
-
-plus_ = []
-minus_ = []
-neu_ = []
-attitude_ = []
-edge_weights_= []
-eigenvalues_ = []
-for i in sol5000:
-    countplus = 0
-    countminus = 0
-    countneu = 0
-    for j in Network.G.nodes:
-        if (i,j) in Network.G.edges:
-            if a0plus[j]==1:
-                countplus +=1
-            elif a0minus[j] == 1:
-                countminus +=1
-            else:
-                countneu +=1
-    plus_.append(countplus)
-    minus_.append(countminus)
-    neu_.append(countneu)
-    attitude_.append(Network.G.nodes[i]['initial attitude'])
-    edge_weights_.append(sum(edge[i]))
-    eigenvalues_.append(eigenvalues[i])
-
-print('avg links to pos',np.mean(plus_))
-print('avg links to minus',np.mean(minus_))
-print('avg links to neutral',np.mean(neu_))
-print('avg attitude score',np.mean(attitude_))
-print('avg outgoing edgeweights',np.mean(edge_weights_))
-print('avg eigenvalues',np.mean(eigenvalues_))
-print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
-print('6000\n',sol6000)
-
-plus_ = []
-minus_ = []
-neu_ = []
-attitude_ = []
-edge_weights_= []
-eigenvalues_ = []
-for i in sol6000:
-    countplus = 0
-    countminus = 0
-    countneu = 0
-    for j in Network.G.nodes:
-        if (i,j) in Network.G.edges:
-            if a0plus[j]==1:
-                countplus +=1
-            elif a0minus[j] == 1:
-                countminus +=1
-            else:
-                countneu +=1
-    plus_.append(countplus)
-    minus_.append(countminus)
-    neu_.append(countneu)
-    attitude_.append(Network.G.nodes[i]['initial attitude'])
-    edge_weights_.append(sum(edge[i]))
-    eigenvalues_.append(eigenvalues[i])
-
-print('avg links to pos',np.mean(plus_))
-print('avg links to minus',np.mean(minus_))
-print('avg links to neutral',np.mean(neu_))
-print('avg attitude score',np.mean(attitude_))
-print('avg outgoing edgeweights',np.mean(edge_weights_))
-print('avg eigenvalues',np.mean(eigenvalues_))
-print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
-
-print('7000\n',sol7000)
-
-plus_ = []
-minus_ = []
-neu_ = []
-attitude_ = []
-edge_weights_= []
-eigenvalues_ = []
-for i in sol7000:
-    countplus = 0
-    countminus = 0
-    countneu = 0
-    for j in Network.G.nodes:
-        if (i,j) in Network.G.edges:
-            if a0plus[j]==1:
-                countplus +=1
-            elif a0minus[j] == 1:
-                countminus +=1
-            else:
-                countneu +=1
-    plus_.append(countplus)
-    minus_.append(countminus)
-    neu_.append(countneu)
-    attitude_.append(Network.G.nodes[i]['initial attitude'])
-    edge_weights_.append(sum(edge[i]))
-    eigenvalues_.append(eigenvalues[i])
-
-print('avg links to pos',np.mean(plus_))
-print('avg links to minus',np.mean(minus_))
-print('avg links to neutral',np.mean(neu_))
-print('avg attitude score',np.mean(attitude_))
-print('avg outgoing edgeweights',np.mean(edge_weights_))
-print('avg eigenvalues',np.mean(eigenvalues_))
-print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
-
 print('all\n')
 
-plus_ = []
-minus_ = []
-neu_ = []
-attitude_ = []
-edge_weights_= []
-eigenvalues_ = []
+allcand = []
+allplus_ = []
+allminus_ = []
+allneu_ = []
+allattitude_ = []
+alledge_weights_= []
+alleigenvalues_ = []
+p_threshold = []
 for i in np.where(1-a0plus==1)[0]:
+    allcand.append(i)
     countplus = 0
     countminus = 0
     countneu = 0
+    help_threshold = 0
+    help_edge = 0
     for j in Network.G.nodes:
         if (i,j) in Network.G.edges:
             if a0plus[j]==1:
                 countplus +=1
             elif a0minus[j] == 1:
                 countminus +=1
+                help_threshold += T_plus[j]
+                help_edge += edge[i,j]
             else:
                 countneu +=1
-    plus_.append(countplus)
-    minus_.append(countminus)
-    neu_.append(countneu)
-    attitude_.append(Network.G.nodes[i]['initial attitude'])
-    edge_weights_.append(sum(edge[i]))
-    eigenvalues_.append(eigenvalues[i])
+                help_threshold += T_plus[j]
+                help_edge += edge[i,j]
+    allplus_.append(countplus)
+    allminus_.append(countminus)
+    allneu_.append(countneu)
+    p_threshold.append(help_threshold/(countminus+countneu))
+    allattitude_.append(Network.G.nodes[i]['initial attitude'])
+    alledge_weights_.append(help_edge/(countminus+countneu))
+    alleigenvalues_.append(eigenvalues[i])
 
-print('avg links to pos',np.mean(plus_))
-print('avg links to minus',np.mean(minus_))
-print('avg links to neutral',np.mean(neu_))
-print('avg attitude score',np.mean(attitude_))
-print('avg outgoing edgeweights',np.mean(edge_weights_))
-print('avg eigenvalues',np.mean(eigenvalues_))
-print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
+group1000a = np.where(np.array([ 1 if i in sol1000 else 0 for i in allcand])==1)[0]
+group1000b = np.where(np.array([ 1 if i in sol1000 else 0 for i in allcand])==0)[0]
+plt.figure(figsize=(8, 6))
+plt.scatter((np.array(allneu_)[group1000b]+np.array(allminus_)[group1000b])/(np.array(p_threshold)[group1000b]*np.array(allattitude_)[group1000b]), np.array(allattitude_)[group1000b], color='red', label='Unelected')
+plt.scatter((np.array(allneu_)[group1000a]+np.array(allminus_)[group1000a])/(np.array(p_threshold)[group1000a]*np.array(allattitude_)[group1000a]), np.array(allattitude_)[group1000a], color='blue', label='Selected')
+plt.title('Scatter Plot with 1000 Budget')
+plt.xlabel('Num of Links to Neutral')
+plt.ylabel('Attitude Score')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+df = pd.DataFrame({
+    'Selected': [ 1 if i in sol2000 else 0 for i in allcand],
+    'NumLinkstoMinus': allminus_,
+    'NumLinkstoNeutral': allneu_,
+    'AverageNeighborPosThreshold': p_threshold,
+    'Attitude':allattitude_,
+    'AverageNeighborEdgeWeight':alledge_weights_,
+    'Eigenvalues':alleigenvalues_  
+})
+warnings.filterwarnings('ignore')
+
+X = df.iloc[:, 1:]  # All columns except the first one
+y = df.iloc[:, 0]   # The first column
+
+model = LogisticRegression(class_weight={0: 1, 1: 15})
+model.fit(X, y)
+
+# Making predictions
+predictions = model.predict(X)
+print(sum(predictions))
+# Evaluating the model
+print("Confusion Matrix:\n", confusion_matrix(y, predictions))
+print("\nClassification Report:\n", classification_report(y, predictions))
 
 # =============================================================================
-# Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=10,threshold_neg=-1,inital_threshold=[12,24],time_periods=10,x=sol7000)
-# t=0
-# for Gs in Network.LTM:
-#     print('********************')
-#     print('time',t)
-#     t+=1
-#     ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
-#     mask_pos = np.where(ls==1)
-#     mask_neg = np.where(ls==-1)
-#     age = np.array([Gs.nodes.data('current attitude')[i] for i in Gs.nodes])
-#     pos_age = age[mask_pos]
-#     neg_age = age[mask_neg]
-#     print('Num pos',len(mask_pos[0]))
-#     print('Num negative',len(mask_neg[0]))
-#     print('Mean current att among pos',np.mean(pos_age))
-#     print('Mean current att among neg',np.mean(neg_age))
-#     plt.show()
 # 
+# print('avg links to pos',np.mean(allplus_))
+# print('avg links to minus',np.mean(allminus_))
+# print('avg links to neutral',np.mean(allneu_))
+# print('avg attitude score',np.mean(allattitude_))
+# print('avg outgoing edgeweights',np.mean(alledge_weights_))
+# print('avg eigenvalues',np.mean(alleigenvalues_))
+# print('avg score',np.mean(np.array(alledge_weights_)/np.array(allattitude_)))
+# #score2 = (edgeweights/(num_neu+2*num_neg))/attitude
+# print('avg score2',np.mean((np.array(alledge_weights_)*(np.array(allneu_)+np.array(allminus_)))/np.array(allattitude_)))
 # =============================================================================
+
+# =============================================================================
+# 
+# print('1000\n',sol1000)
+# plus_ = []
+# minus_ = []
+# neu_ = []
+# attitude_ = []
+# edge_weights_= []
+# eigenvalues_ = []
+# for i in sol1000:
+#     countplus = 0
+#     countminus = 0
+#     countneu = 0
+#     for j in Network.G.nodes:
+#         if (i,j) in Network.G.edges:
+#             if a0plus[j]==1:
+#                 countplus +=1
+#             elif a0minus[j] == 1:
+#                 countminus +=1
+#             else:
+#                 countneu +=1
+#     plus_.append(countplus)
+#     minus_.append(countminus)
+#     neu_.append(countneu)
+#     attitude_.append(Network.G.nodes[i]['initial attitude'])
+#     edge_weights_.append(sum(edge[i]))
+#     eigenvalues_.append(eigenvalues[i])
+# 
+# print('avg links to pos',np.mean(plus_))
+# print('avg links to minus',np.mean(minus_))
+# print('avg links to neutral',np.mean(neu_))
+# print('avg attitude score',np.mean(attitude_))
+# print('avg outgoing edgeweights',np.mean(edge_weights_))
+# print('avg eigenvalues',np.mean(eigenvalues_))
+# print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
+# print('avg score2',np.mean((np.array(edge_weights_)*(np.array(neu_)+np.array(minus_)))/np.array(attitude_)))
+# 
+# 
+# print('2000\n',sol2000)
+# 
+# plus_ = []
+# minus_ = []
+# neu_ = []
+# attitude_ = []
+# edge_weights_= []
+# eigenvalues_ = []
+# for i in sol2000:
+#     countplus = 0
+#     countminus = 0
+#     countneu = 0
+#     for j in Network.G.nodes:
+#         if (i,j) in Network.G.edges:
+#             if a0plus[j]==1:
+#                 countplus +=1
+#             elif a0minus[j] == 1:
+#                 countminus +=1
+#             else:
+#                 countneu +=1
+#     plus_.append(countplus)
+#     minus_.append(countminus)
+#     neu_.append(countneu)
+#     attitude_.append(Network.G.nodes[i]['initial attitude'])
+#     edge_weights_.append(sum(edge[i]))
+#     eigenvalues_.append(eigenvalues[i])
+# 
+# print('avg links to pos',np.mean(plus_))
+# print('avg links to minus',np.mean(minus_))
+# print('avg links to neutral',np.mean(neu_))
+# print('avg attitude score',np.mean(attitude_))
+# print('avg outgoing edgeweights',np.mean(edge_weights_))
+# print('avg eigenvalues',np.mean(eigenvalues_))
+# print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
+# print('avg score2',np.mean((np.array(edge_weights_)*(np.array(neu_)+np.array(minus_)))/np.array(attitude_)))
+# 
+# print('3000\n',sol3000)
+# 
+# plus_ = []
+# minus_ = []
+# neu_ = []
+# attitude_ = []
+# edge_weights_= []
+# eigenvalues_ = []
+# for i in sol3000:
+#     countplus = 0
+#     countminus = 0
+#     countneu = 0
+#     for j in Network.G.nodes:
+#         if (i,j) in Network.G.edges:
+#             if a0plus[j]==1:
+#                 countplus +=1
+#             elif a0minus[j] == 1:
+#                 countminus +=1
+#             else:
+#                 countneu +=1
+#     plus_.append(countplus)
+#     minus_.append(countminus)
+#     neu_.append(countneu)
+#     attitude_.append(Network.G.nodes[i]['initial attitude'])
+#     edge_weights_.append(sum(edge[i]))
+#     eigenvalues_.append(eigenvalues[i])
+# 
+# print('avg links to pos',np.mean(plus_))
+# print('avg links to minus',np.mean(minus_))
+# print('avg links to neutral',np.mean(neu_))
+# print('avg attitude score',np.mean(attitude_))
+# print('avg outgoing edgeweights',np.mean(edge_weights_))
+# print('avg eigenvalues',np.mean(eigenvalues_))
+# print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
+# print('avg score2',np.mean((np.array(edge_weights_)*(np.array(neu_)+np.array(minus_)))/np.array(attitude_)))
+# 
+# print('4000\n',sol4000)
+# 
+# plus_ = []
+# minus_ = []
+# neu_ = []
+# attitude_ = []
+# edge_weights_= []
+# eigenvalues_ = []
+# for i in sol4000:
+#     countplus = 0
+#     countminus = 0
+#     countneu = 0
+#     for j in Network.G.nodes:
+#         if (i,j) in Network.G.edges:
+#             if a0plus[j]==1:
+#                 countplus +=1
+#             elif a0minus[j] == 1:
+#                 countminus +=1
+#             else:
+#                 countneu +=1
+#     plus_.append(countplus)
+#     minus_.append(countminus)
+#     neu_.append(countneu)
+#     attitude_.append(Network.G.nodes[i]['initial attitude'])
+#     edge_weights_.append(sum(edge[i]))
+#     eigenvalues_.append(eigenvalues[i])
+# 
+# print('avg links to pos',np.mean(plus_))
+# print('avg links to minus',np.mean(minus_))
+# print('avg links to neutral',np.mean(neu_))
+# print('avg attitude score',np.mean(attitude_))
+# print('avg outgoing edgeweights',np.mean(edge_weights_))
+# print('avg eigenvalues',np.mean(eigenvalues_))
+# print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
+# print('avg score2',np.mean((np.array(edge_weights_)*(np.array(neu_)+np.array(minus_)))/np.array(attitude_)))
+# 
+# print('5000\n',sol5000)
+# 
+# plus_ = []
+# minus_ = []
+# neu_ = []
+# attitude_ = []
+# edge_weights_= []
+# eigenvalues_ = []
+# for i in sol5000:
+#     countplus = 0
+#     countminus = 0
+#     countneu = 0
+#     for j in Network.G.nodes:
+#         if (i,j) in Network.G.edges:
+#             if a0plus[j]==1:
+#                 countplus +=1
+#             elif a0minus[j] == 1:
+#                 countminus +=1
+#             else:
+#                 countneu +=1
+#     plus_.append(countplus)
+#     minus_.append(countminus)
+#     neu_.append(countneu)
+#     attitude_.append(Network.G.nodes[i]['initial attitude'])
+#     edge_weights_.append(sum(edge[i]))
+#     eigenvalues_.append(eigenvalues[i])
+# 
+# print('avg links to pos',np.mean(plus_))
+# print('avg links to minus',np.mean(minus_))
+# print('avg links to neutral',np.mean(neu_))
+# print('avg attitude score',np.mean(attitude_))
+# print('avg outgoing edgeweights',np.mean(edge_weights_))
+# print('avg eigenvalues',np.mean(eigenvalues_))
+# print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
+# print('avg score2',np.mean((np.array(edge_weights_)*(np.array(neu_)+np.array(minus_)))/np.array(attitude_)))
+# 
+# print('6000\n',sol6000)
+# 
+# plus_ = []
+# minus_ = []
+# neu_ = []
+# attitude_ = []
+# edge_weights_= []
+# eigenvalues_ = []
+# for i in sol6000:
+#     countplus = 0
+#     countminus = 0
+#     countneu = 0
+#     for j in Network.G.nodes:
+#         if (i,j) in Network.G.edges:
+#             if a0plus[j]==1:
+#                 countplus +=1
+#             elif a0minus[j] == 1:
+#                 countminus +=1
+#             else:
+#                 countneu +=1
+#     plus_.append(countplus)
+#     minus_.append(countminus)
+#     neu_.append(countneu)
+#     attitude_.append(Network.G.nodes[i]['initial attitude'])
+#     edge_weights_.append(sum(edge[i]))
+#     eigenvalues_.append(eigenvalues[i])
+# 
+# print('avg links to pos',np.mean(plus_))
+# print('avg links to minus',np.mean(minus_))
+# print('avg links to neutral',np.mean(neu_))
+# print('avg attitude score',np.mean(attitude_))
+# print('avg outgoing edgeweights',np.mean(edge_weights_))
+# print('avg eigenvalues',np.mean(eigenvalues_))
+# print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
+# print('avg score2',np.mean((np.array(edge_weights_)*(np.array(neu_)+np.array(minus_)))/np.array(attitude_)))
+# 
+# print('7000\n',sol7000)
+# 
+# plus_ = []
+# minus_ = []
+# neu_ = []
+# attitude_ = []
+# edge_weights_= []
+# eigenvalues_ = []
+# for i in sol7000:
+#     countplus = 0
+#     countminus = 0
+#     countneu = 0
+#     for j in Network.G.nodes:
+#         if (i,j) in Network.G.edges:
+#             if a0plus[j]==1:
+#                 countplus +=1
+#             elif a0minus[j] == 1:
+#                 countminus +=1
+#             else:
+#                 countneu +=1
+#     plus_.append(countplus)
+#     minus_.append(countminus)
+#     neu_.append(countneu)
+#     attitude_.append(Network.G.nodes[i]['initial attitude'])
+#     edge_weights_.append(sum(edge[i]))
+#     eigenvalues_.append(eigenvalues[i])
+# 
+# print('avg links to pos',np.mean(plus_))
+# print('avg links to minus',np.mean(minus_))
+# print('avg links to neutral',np.mean(neu_))
+# print('avg attitude score',np.mean(attitude_))
+# print('avg outgoing edgeweights',np.mean(edge_weights_))
+# print('avg eigenvalues',np.mean(eigenvalues_))
+# print('avg score',np.mean(np.array(edge_weights_)/np.array(attitude_)))
+# print('avg score2',np.mean((np.array(edge_weights_)*(np.array(neu_)+np.array(minus_)))/np.array(attitude_)))
+# =============================================================================
+
+
+Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=10,threshold_neg=-1,inital_threshold=[12,24],time_periods=10,x=soluniform)
+t=0
+for Gs in Network.LTM:
+    print('********************')
+    print('time',t)
+    t+=1
+    ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
+    mask_pos = np.where(ls==1)
+    mask_neg = np.where(ls==-1)
+    age = np.array([Gs.nodes.data('current attitude')[i] for i in Gs.nodes])
+    pos_age = age[mask_pos]
+    neg_age = age[mask_neg]
+    print('Num pos',len(mask_pos[0]))
+    print('Num negative',len(mask_neg[0]))
+    print('Mean current att among pos',np.mean(pos_age))
+    print('Mean current att among neg',np.mean(neg_age))
+    plt.show()
+
+

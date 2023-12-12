@@ -156,28 +156,28 @@ try:
     atminus = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a-t") 
     atplus_ = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a+t_") 
     atminus_ = lm.addMVar((num_nodes,T),vtype=GRB.BINARY, name="a-t_") 
-    lm.setObjective(sum(atplus_[:,T-1]),GRB.MAXIMIZE)
+    lm.setObjective(sum(atplus_[:,T-1])-atminus.sum()+atplus_.sum(),GRB.MAXIMIZE)
+    for i in range(num_nodes):
 # =============================================================================
-#     for i in range(num_nodes):
 #         if i in sol1000:
 #             x[i].start = 1
 # =============================================================================
             #lm.addConstr(x[i]==1)
-# =============================================================================
-#         if a0plus[i] == 1:
-#             lm.addConstr(x[i]==0)
-# =============================================================================
+        if a0plus[i] == 1:
+            lm.addConstr(x[i]==0)
     #lm.addConstr(np.transpose(cost_vector)@x<=budget)
-    lm.addConstr(sum(x)<=budget)
-    lm.addConstr(3*atplus_[:,0]>=a0plus+x)
-    lm.addConstr(3*(atplus_[:,0]-np.ones(num_nodes))<=a0plus+x-eps)
-    lm.addConstr(3*atminus_[:,0]>=a0minus-x)
-    lm.addConstr(3*(atminus_[:,0]-np.ones(num_nodes)) <= a0minus-x-eps)
+    lm.addConstr(x.sum()<=budget)
+    lm.addConstr(atplus_[:,0]==a0plus+x)
+    lm.addConstrs((atminus_[i,0] == a0minus[i]*(1-x[i])for i in range(num_nodes)))
     for  t in range(1,T):
         lm.addConstr(1000*(atplus[:,t]-np.ones(num_nodes)) <= np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus)
-        lm.addConstr(1000*atplus[:,t]>=np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus+eps)
-        lm.addConstr(1000*(atminus[:,t]-np.ones(num_nodes)) <= -np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus)
         lm.addConstr(1000*atminus[:,t]>=-np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus+eps)
+# =============================================================================
+#         lm.addConstr(1000*(atplus[:,t]-np.ones(num_nodes)) <= np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus)
+#         lm.addConstr(1000*atplus[:,t]>=np.transpose(edge)@atplus_[:,t-1]-np.transpose(edge)@atminus_[:,t-1]-T_plus+eps)
+#         lm.addConstr(1000*(atminus[:,t]-np.ones(num_nodes)) <= -np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus)
+#         lm.addConstr(1000*atminus[:,t]>=-np.transpose(edge)@atplus_[:,t-1]+np.transpose(edge)@atminus_[:,t-1]+T_minus+eps)
+# =============================================================================
         lm.addConstr(3*atplus_[:,t]>=atplus[:,t]-atminus[:,t]+atplus_[:,t-1])
         lm.addConstr(3*(atplus_[:,t]-np.ones(num_nodes))<=atplus[:,t]-atminus[:,t]+atplus_[:,t-1]-eps)
         lm.addConstr(3*atminus_[:,t]>=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1])
@@ -212,7 +212,7 @@ try:
     #lm.optimize(myheuristic)
     lm.Params.MIPFocus = 0
     #lm.Params.NoRelHeurTime = 30
-    #lm.setParam('TimeLimit', 1800)
+    lm.setParam('TimeLimit', 1800)
     lm.optimize()
     sol = []
     count=0
