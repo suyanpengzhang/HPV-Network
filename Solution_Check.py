@@ -82,7 +82,10 @@ threshold_neg = -1
 lambda_ = 0.6
 
 print('all\n')
-
+for e in Network.G.edges:
+    Network.G[e[0]][e[1]]['weight_bc'] = 1/Network.G[e[0]][e[1]]['weight']
+BC = nx.betweenness_centrality(Network.G,weight = 'weight_bc')
+LC = nx.load_centrality(Network.G,weight = 'weight_bc')
 allcand = []
 allplus_ = []
 allminus_ = []
@@ -91,6 +94,17 @@ allattitude_ = []
 alledge_weights_= []
 alleigenvalues_ = []
 p_threshold = []
+shortestpaths = []
+degrees = []
+squareclusterings =[]
+clusterings =[]
+closeness_centrality_ = []
+betweenness_centrality_ = []
+load_centrality_  =[]
+local_reaching_centrality_ = []
+harmonic_centrality_ = []
+mean_dispersion = []
+total_dispersion = []
 for i in np.where(1-a0plus==1)[0]:
     allcand.append(i)
     countplus = 0
@@ -117,12 +131,23 @@ for i in np.where(1-a0plus==1)[0]:
     allattitude_.append(Network.G.nodes[i]['initial attitude'])
     alledge_weights_.append(help_edge/(countminus+countneu))
     alleigenvalues_.append(eigenvalues[i])
+    degrees.append(Network.G.degree[i])
+    squareclusterings.append(nx.square_clustering(Network.G, i))
+    clusterings.append(nx.clustering(Network.G, i))
+    closeness_centrality_.append(nx.closeness_centrality(Network.G, i))
+    betweenness_centrality_.append(BC[i])
+    load_centrality_.append(LC[i])
+    total_dispersion.append(np.sum(list(nx.dispersion(Network.G)[i].values())))
+    harmonic_centrality_.append(nx.harmonic_centrality(Network.G)[i])
+    mean_dispersion.append(np.mean(list(nx.dispersion(Network.G)[i].values())))
+    local_reaching_centrality_.append(nx.local_reaching_centrality(Network.G,i,weight = 'weight'))
+    shortestpaths.append(np.mean(list(nx.single_source_shortest_path_length(Network.G, i).values())))
 
-group1000a = np.where(np.array([ 1 if i in sol1000 else 0 for i in allcand])==1)[0]
-group1000b = np.where(np.array([ 1 if i in sol1000 else 0 for i in allcand])==0)[0]
+group1000a = np.where(np.array([ 1 if i in soluniform else 0 for i in allcand])==1)[0]
+group1000b = np.where(np.array([ 1 if i in soluniform else 0 for i in allcand])==0)[0]
 plt.figure(figsize=(8, 6))
-plt.scatter((np.array(allneu_)[group1000b]+np.array(allminus_)[group1000b])/(np.array(p_threshold)[group1000b]*np.array(allattitude_)[group1000b]), np.array(allattitude_)[group1000b], color='red', label='Unelected')
-plt.scatter((np.array(allneu_)[group1000a]+np.array(allminus_)[group1000a])/(np.array(p_threshold)[group1000a]*np.array(allattitude_)[group1000a]), np.array(allattitude_)[group1000a], color='blue', label='Selected')
+plt.scatter(np.array(total_dispersion)[group1000b], np.array(allattitude_)[group1000b], color='red', label='Unelected')
+plt.scatter(np.array(total_dispersion)[group1000a], np.array(allattitude_)[group1000a], color='blue', label='Selected')
 plt.title('Scatter Plot with 1000 Budget')
 plt.xlabel('Num of Links to Neutral')
 plt.ylabel('Attitude Score')
@@ -131,20 +156,31 @@ plt.grid(True)
 plt.show()
 
 df = pd.DataFrame({
-    'Selected': [ 1 if i in sol2000 else 0 for i in allcand],
+    'Selected': [ 1 if i in soluniform else 0 for i in allcand],
     'NumLinkstoMinus': allminus_,
     'NumLinkstoNeutral': allneu_,
     'AverageNeighborPosThreshold': p_threshold,
     'Attitude':allattitude_,
     'AverageNeighborEdgeWeight':alledge_weights_,
-    'Eigenvalues':alleigenvalues_  
+    'Eigenvalues':alleigenvalues_, 
+    'AverageShortestPathLengths':shortestpaths,
+    'Degree':degrees,
+    'SquareClustering':squareclusterings,
+    'ClusteringCoefficient':clusterings,
+    'ClosenessCentrality':closeness_centrality_,
+    'BetweennessCentrality':betweenness_centrality_,
+    'LoadCentrality':load_centrality_,
+    'LocalReachingCentrality':local_reaching_centrality_,
+    'HdispersionarmonicCentrality':harmonic_centrality_,
+    'AverageDispersion':mean_dispersion,
+    'TotalDispersion':total_dispersion
 })
 warnings.filterwarnings('ignore')
 
 X = df.iloc[:, 1:]  # All columns except the first one
 y = df.iloc[:, 0]   # The first column
 
-model = LogisticRegression(class_weight={0: 1, 1: 15})
+model = LogisticRegression(class_weight={0: 1, 1: 80})
 model.fit(X, y)
 
 # Making predictions
@@ -423,22 +459,24 @@ print("\nClassification Report:\n", classification_report(y, predictions))
 # =============================================================================
 
 
-Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=10,threshold_neg=-1,inital_threshold=[12,24],time_periods=10,x=soluniform)
-t=0
-for Gs in Network.LTM:
-    print('********************')
-    print('time',t)
-    t+=1
-    ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
-    mask_pos = np.where(ls==1)
-    mask_neg = np.where(ls==-1)
-    age = np.array([Gs.nodes.data('current attitude')[i] for i in Gs.nodes])
-    pos_age = age[mask_pos]
-    neg_age = age[mask_neg]
-    print('Num pos',len(mask_pos[0]))
-    print('Num negative',len(mask_neg[0]))
-    print('Mean current att among pos',np.mean(pos_age))
-    print('Mean current att among neg',np.mean(neg_age))
-    plt.show()
-
+# =============================================================================
+# Network.run_linear_threshold_model(lambda_ = 0.6,threshold_pos=10,threshold_neg=-1,inital_threshold=[12,24],time_periods=10,x=soluniform)
+# t=0
+# for Gs in Network.LTM:
+#     print('********************')
+#     print('time',t)
+#     t+=1
+#     ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
+#     mask_pos = np.where(ls==1)
+#     mask_neg = np.where(ls==-1)
+#     age = np.array([Gs.nodes.data('current attitude')[i] for i in Gs.nodes])
+#     pos_age = age[mask_pos]
+#     neg_age = age[mask_neg]
+#     print('Num pos',len(mask_pos[0]))
+#     print('Num negative',len(mask_neg[0]))
+#     print('Mean current att among pos',np.mean(pos_age))
+#     print('Mean current att among neg',np.mean(neg_age))
+#     plt.show()
+# 
+# =============================================================================
 
