@@ -24,7 +24,7 @@ from numpy import linalg as LA
 
 
 
-# Replace this with the path to your actual license file
+# Path to your actual license file
 path_to_license_file = '/Users/suyanpengzhang/gurobi.lic'
 
 # Set the environment variable
@@ -95,12 +95,14 @@ neg_thre = 24
         
 print(len(edges))
 
-max_depth = 0
-p = nx.shortest_path(Network.G)
-for i in range(len(Network.G.nodes)):
-    po = [len(p[i][j]) for j in p[i]]
-    if max(po)>max_depth:
-        max_depth = max(po)
+# =============================================================================
+# max_depth = 0
+# p = nx.shortest_path(Network.G)
+# for i in range(len(Network.G.nodes)):
+#     po = [len(p[i][j]) for j in p[i]]
+#     if max(po)>max_depth:
+#         max_depth = max(po)
+# =============================================================================
 
 num_nodes = len(Network.G.nodes)
 eps = 0.0001
@@ -143,7 +145,7 @@ for i in range(num_nodes):
     T_plus[i] = threshold_pos-lambda_*threshold_pos*Network.G.nodes[i]['listen_score']
     T_minus[i] = threshold_neg+lambda_*threshold_neg*Network.G.nodes[i]['listen_score']
 
-with open("sol_3_uniform.pkl", "rb") as file:
+with open("sol_20_uniform.pkl", "rb") as file:
     sol1000 = pickle.load(file)
 try:
     # Create a new model
@@ -160,15 +162,15 @@ try:
 # =============================================================================
 #     for i in range(num_nodes):
 #         if i in sol1000:
-#             x[i].start = 1
+#             #x[i].start = 1
+#             lm.addConstr(x[i]==1)
 # =============================================================================
-            #lm.addConstr(x[i]==1)
 # =============================================================================
 #         if a0plus[i] == 1:
 #             lm.addConstr(x[i]==0)
 # =============================================================================
     #lm.addConstr(np.transpose(cost_vector)@x<=budget)
-    lm.addConstr(sum(x)<=budget)
+    lm.addConstr(sum(x)==budget)
     lm.addConstr(3*atplus_[:,0]>=a0plus+x)
     lm.addConstr(3*(atplus_[:,0]-np.ones(num_nodes))<=a0plus+x-eps)
     lm.addConstr(3*atminus_[:,0]>=a0minus-x)
@@ -183,7 +185,7 @@ try:
         lm.addConstr(3*atminus_[:,t]>=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1])
         lm.addConstr(3*(atminus_[:,t]-np.ones(num_nodes))<=-atplus[:,t]+atminus[:,t]+atminus_[:,t-1]-eps)
     # Optimize model
-    #lm.setParam('TimeLimit', 10)
+    lm.setParam('TimeLimit', 1800)
     lm.Params.Threads = 18
     lm.Params.OutputFlag = 1
     lm.Params.LogToConsole = 1
@@ -193,27 +195,18 @@ try:
             if model.cbGet(GRB.Callback.MIPNODE_STATUS) == GRB.OPTIMAL:
                 # Get the current relaxation solution
                 node_rel_vals = model.cbGetNodeRel(x)
-
+                #print(node_rel_vals)
                 # Implement your heuristic logic here
-                if np.transpose(cost_vector)@node_rel_vals-budget<=150:
-                    # Set the value of z in the MIP node
-                    new_vals = node_rel_vals.copy()
-                    avail_cost = max(cost_vector[np.where((np.array(node_rel_vals) == 0) & (np.array(cost_vector) <= 150)& (np.array(a0plus) == 0))])
-                    new_plus = np.where((np.array(node_rel_vals) == 0) & (np.array(cost_vector) == avail_cost)& (np.array(a0plus) == 0))
-                    #new_vals[new_plus] = 1  # Set z to 1
-# =============================================================================
-#                     print('oiciwneonceocewneocwin')
-#                     print(new_plus[0][0])
-# =============================================================================
-                    model.cbSetSolution(x[new_plus[0][0]], 1)
-
+                new_val  = np.round(node_rel_vals,0)
+                #new_vals[new_plus] = 1  # Set z to 1
+                model.cbSetSolution(x, new_val)
                     # Try to use the current node's solution
-                    model.cbUseSolution()
+                model.cbUseSolution()
     #lm.optimize(myheuristic)
-    lm.Params.MIPFocus = 0
+    #lm.Params.MIPFocus = 0
     #lm.Params.NoRelHeurTime = 30
-    #lm.setParam('TimeLimit', 1800)
-    lm.optimize()
+    lm.optimize(myheuristic)
+    lm.setParam('TimeLimit', 60)
     sol = []
     count=0
     print('LP:')
@@ -242,8 +235,10 @@ except AttributeError:
     print('Encountered an attribute error')
 print('********************')    
 print('Selections')
-with open('sol_20_uniform.pkl', 'wb') as f:
-    pickle.dump(sol, f)
+# =============================================================================
+# with open('sol_b20_uniform_network1.pkl', 'wb') as f:
+#     pickle.dump(sol, f)
+# =============================================================================
 # =============================================================================
 # for i in sol:
 #     print('attitude: ',Network.G.nodes[i]['initial attitude'])

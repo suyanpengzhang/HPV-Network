@@ -24,27 +24,56 @@ from numpy import linalg as LA
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
+from scipy import stats
 
 
-with open("network_example/network1.pkl", "rb") as file:
+with open("network_example/network2.pkl", "rb") as file:
     Network = pickle.load(file)
-    
-with open("sol_20_uniform.pkl", "rb") as file:
+with open("network_example/network1.pkl", "rb") as file:
+    Network = pickle.load(file)    
+file_path = 'Data/hpvdata.csv'
+hpvdata = pd.read_csv(file_path)
+hpvdata = hpvdata.dropna(subset=['HPV_VAX_attitu_s35'])
+income = [i for i in hpvdata['sec1_q8'].values]
+residence = [i for i in hpvdata['sec1_q9'].values]
+with open("sol_20_uniform_network2.pkl", "rb") as file:
     soluniform = pickle.load(file)
-with open("sols/sol_1000.pkl", "rb") as file:
-    sol1000 = pickle.load(file)
-with open("sols/sol_2000.pkl", "rb") as file:
-    sol2000 = pickle.load(file)
-with open("sols/sol_3000.pkl", "rb") as file:
-    sol3000 = pickle.load(file)
-with open("sols/sol_4000.pkl", "rb") as file:
-    sol4000 = pickle.load(file)
-with open("sols/sol_5000.pkl", "rb") as file:
-    sol5000 = pickle.load(file)
-with open("sols/sol_6000.pkl", "rb") as file:
-    sol6000 = pickle.load(file)
-with open("sols/sol_7000.pkl", "rb") as file:
-    sol7000 = pickle.load(file)
+selected_income =[]
+unselected_income =[]
+selected_residence =[]
+unselected_residence =[]
+
+for i in range(len(income)):
+    if i in soluniform:
+        if income[i]>0:
+            selected_income.append(income[i])
+            selected_residence.append(residence[i])
+    else:
+        if income[i]>0:
+            unselected_income.append(income[i])
+            unselected_residence.append(residence[i])
+print('income')
+print(stats.ttest_ind(selected_income, unselected_income))
+print('residence')
+print(stats.ttest_ind(selected_residence ,unselected_residence))
+# =============================================================================
+# with open("sol_20_uniform_network2.pkl", "rb") as file:
+#     soluniform = pickle.load(file)
+# with open("sols/sol_1000.pkl", "rb") as file:
+#     sol1000 = pickle.load(file)
+# with open("sols/sol_2000.pkl", "rb") as file:
+#     sol2000 = pickle.load(file)
+# with open("sols/sol_3000.pkl", "rb") as file:
+#     sol3000 = pickle.load(file)
+# with open("sols/sol_4000.pkl", "rb") as file:
+#     sol4000 = pickle.load(file)
+# with open("sols/sol_5000.pkl", "rb") as file:
+#     sol5000 = pickle.load(file)
+# with open("sols/sol_6000.pkl", "rb") as file:
+#     sol6000 = pickle.load(file)
+# with open("sols/sol_7000.pkl", "rb") as file:
+#     sol7000 = pickle.load(file)
+# =============================================================================
 initial_status = [Network.G.nodes[i]['initial attitude'] for i in Network.G.nodes]
 for i in range(len(initial_status)):
     if initial_status[i]>=24:
@@ -82,113 +111,142 @@ threshold_neg = -1
 lambda_ = 0.6
 
 print('all\n')
-for e in Network.G.edges:
-    Network.G[e[0]][e[1]]['weight_bc'] = 1/Network.G[e[0]][e[1]]['weight']
-BC = nx.betweenness_centrality(Network.G,weight = 'weight_bc')
-LC = nx.load_centrality(Network.G,weight = 'weight_bc')
-allcand = []
-allplus_ = []
-allminus_ = []
-allneu_ = []
-allattitude_ = []
-alledge_weights_= []
-alleigenvalues_ = []
-p_threshold = []
-shortestpaths = []
-degrees = []
-squareclusterings =[]
-clusterings =[]
-closeness_centrality_ = []
-betweenness_centrality_ = []
-load_centrality_  =[]
-local_reaching_centrality_ = []
-harmonic_centrality_ = []
-mean_dispersion = []
-total_dispersion = []
-for i in np.where(1-a0plus==1)[0]:
-    allcand.append(i)
-    countplus = 0
-    countminus = 0
-    countneu = 0
-    help_threshold = 0
-    help_edge = 0
-    for j in Network.G.nodes:
-        if (i,j) in Network.G.edges:
-            if a0plus[j]==1:
-                countplus +=1
-            elif a0minus[j] == 1:
-                countminus +=1
-                help_threshold += T_plus[j]
-                help_edge += edge[i,j]
-            else:
-                countneu +=1
-                help_threshold += T_plus[j]
-                help_edge += edge[i,j]
-    allplus_.append(countplus)
-    allminus_.append(countminus)
-    allneu_.append(countneu)
-    p_threshold.append(help_threshold/(countminus+countneu))
-    allattitude_.append(Network.G.nodes[i]['initial attitude'])
-    alledge_weights_.append(help_edge/(countminus+countneu))
-    alleigenvalues_.append(eigenvalues[i])
-    degrees.append(Network.G.degree[i])
-    squareclusterings.append(nx.square_clustering(Network.G, i))
-    clusterings.append(nx.clustering(Network.G, i))
-    closeness_centrality_.append(nx.closeness_centrality(Network.G, i))
-    betweenness_centrality_.append(BC[i])
-    load_centrality_.append(LC[i])
-    total_dispersion.append(np.sum(list(nx.dispersion(Network.G)[i].values())))
-    harmonic_centrality_.append(nx.harmonic_centrality(Network.G)[i])
-    mean_dispersion.append(np.mean(list(nx.dispersion(Network.G)[i].values())))
-    local_reaching_centrality_.append(nx.local_reaching_centrality(Network.G,i,weight = 'weight'))
-    shortestpaths.append(np.mean(list(nx.single_source_shortest_path_length(Network.G, i).values())))
+# =============================================================================
+# for e in Network.G.edges:
+#     Network.G[e[0]][e[1]]['weight_bc'] = 1/Network.G[e[0]][e[1]]['weight']
+# BC = nx.betweenness_centrality(Network.G,weight = 'weight_bc')
+# LC = nx.load_centrality(Network.G,weight = 'weight_bc')
+# allcand = []
+# allplus_ = []
+# allminus_ = []
+# allneu_ = []
+# allattitude_ = []
+# alledge_weights_= []
+# alleigenvalues_ = []
+# p_threshold = []
+# shortestpaths = []
+# degrees = []
+# squareclusterings =[]
+# clusterings =[]
+# closeness_centrality_ = []
+# betweenness_centrality_ = []
+# load_centrality_  =[]
+# local_reaching_centrality_ = []
+# harmonic_centrality_ = []
+# mean_dispersion = []
+# total_dispersion = []
+# for i in np.where(1-a0plus==1)[0]:
+#     print(len(allcand))
+#     allcand.append(i)
+#     countplus = 0
+#     countminus = 0
+#     countneu = 0
+#     help_threshold = 0
+#     help_edge = 0
+#     for j in Network.G.nodes:
+#         if (i,j) in Network.G.edges:
+#             if a0plus[j]==1:
+#                 countplus +=1
+#             elif a0minus[j] == 1:
+#                 countminus +=1
+#                 help_threshold += T_plus[j]
+#                 help_edge += edge[i,j]
+#             else:
+#                 countneu +=1
+#                 help_threshold += T_plus[j]
+#                 help_edge += edge[i,j]
+#     allplus_.append(countplus)
+#     allminus_.append(countminus)
+#     allneu_.append(countneu)
+#     p_threshold.append(help_threshold/(countminus+countneu))
+#     allattitude_.append(Network.G.nodes[i]['initial attitude'])
+#     alledge_weights_.append(help_edge/(countminus+countneu))
+#     alleigenvalues_.append(eigenvalues[i])
+#     degrees.append(Network.G.degree[i])
+#     squareclusterings.append(nx.square_clustering(Network.G, i))
+#     clusterings.append(nx.clustering(Network.G, i))
+#     closeness_centrality_.append(nx.closeness_centrality(Network.G, i))
+#     betweenness_centrality_.append(BC[i])
+#     load_centrality_.append(LC[i])
+#     total_dispersion.append(np.sum(list(nx.dispersion(Network.G)[i].values())))
+#     harmonic_centrality_.append(nx.harmonic_centrality(Network.G)[i])
+#     mean_dispersion.append(np.mean(list(nx.dispersion(Network.G)[i].values())))
+#     local_reaching_centrality_.append(nx.local_reaching_centrality(Network.G,i,weight = 'weight'))
+#     shortestpaths.append(np.mean(list(nx.single_source_shortest_path_length(Network.G, i).values())))
+# 
+# group1000a = np.where(np.array([ 1 if i in soluniform else 0 for i in allcand])==1)[0]
+# group1000b = np.where(np.array([ 1 if i in soluniform else 0 for i in allcand])==0)[0]
+# plt.figure(figsize=(8, 6))
+# plt.scatter(np.array(total_dispersion)[group1000b], np.array(allattitude_)[group1000b], color='red', label='Unelected')
+# plt.scatter(np.array(total_dispersion)[group1000a], np.array(allattitude_)[group1000a], color='blue', label='Selected')
+# plt.title('Scatter Plot with 1000 Budget')
+# plt.xlabel('Num of Links to Neutral')
+# plt.ylabel('Attitude Score')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
+# 
+# df = pd.DataFrame({
+#     'Selected': [ 1 if i in soluniform else 0 for i in allcand],
+#     'NumLinkstoMinus': allminus_,
+#     'NumLinkstoNeutral': allneu_,
+#     'AverageNeighborPosThreshold': p_threshold,
+#     'Attitude':allattitude_,
+#     'AverageNeighborEdgeWeight':alledge_weights_,
+#     'Eigenvalues':alleigenvalues_, 
+#     'AverageShortestPathLengths':shortestpaths,
+#     'Degree':degrees,
+#     'SquareClustering':squareclusterings,
+#     'ClusteringCoefficient':clusterings,
+#     'ClosenessCentrality':closeness_centrality_,
+#     'BetweennessCentrality':betweenness_centrality_,
+#     'LoadCentrality':load_centrality_,
+#     'LocalReachingCentrality':local_reaching_centrality_,
+#     'HdispersionarmonicCentrality':harmonic_centrality_,
+#     'AverageDispersion':mean_dispersion,
+#     'TotalDispersion':total_dispersion
+# })
+# warnings.filterwarnings('ignore')
+# df.to_pickle('df_results_network2.pkl')
+# df = pd.read_pickle("df_results_network2.pkl")
+# =============================================================================
+df = pd.read_pickle("df_results_network2.pkl")
+df = pd.read_pickle("df_results.pkl")
 
-group1000a = np.where(np.array([ 1 if i in soluniform else 0 for i in allcand])==1)[0]
-group1000b = np.where(np.array([ 1 if i in soluniform else 0 for i in allcand])==0)[0]
-plt.figure(figsize=(8, 6))
-plt.scatter(np.array(total_dispersion)[group1000b], np.array(allattitude_)[group1000b], color='red', label='Unelected')
-plt.scatter(np.array(total_dispersion)[group1000a], np.array(allattitude_)[group1000a], color='blue', label='Selected')
-plt.title('Scatter Plot with 1000 Budget')
-plt.xlabel('Num of Links to Neutral')
-plt.ylabel('Attitude Score')
-plt.legend()
-plt.grid(True)
-plt.show()
-
-df = pd.DataFrame({
-    'Selected': [ 1 if i in soluniform else 0 for i in allcand],
-    'NumLinkstoMinus': allminus_,
-    'NumLinkstoNeutral': allneu_,
-    'AverageNeighborPosThreshold': p_threshold,
-    'Attitude':allattitude_,
-    'AverageNeighborEdgeWeight':alledge_weights_,
-    'Eigenvalues':alleigenvalues_, 
-    'AverageShortestPathLengths':shortestpaths,
-    'Degree':degrees,
-    'SquareClustering':squareclusterings,
-    'ClusteringCoefficient':clusterings,
-    'ClosenessCentrality':closeness_centrality_,
-    'BetweennessCentrality':betweenness_centrality_,
-    'LoadCentrality':load_centrality_,
-    'LocalReachingCentrality':local_reaching_centrality_,
-    'HdispersionarmonicCentrality':harmonic_centrality_,
-    'AverageDispersion':mean_dispersion,
-    'TotalDispersion':total_dispersion
-})
-warnings.filterwarnings('ignore')
 
 X = df.iloc[:, 1:]  # All columns except the first one
 y = df.iloc[:, 0]   # The first column
+###
+num_cand = len(np.where(1-a0plus==1)[0])
+data = np.zeros((num_cand,2*len(Network.G.nodes)))
+count = 0
+for i in np.where(1-a0plus==1)[0]:
+    for j in range(len(Network.G.nodes)):
+        if (i,j) in Network.G.edges:
+             data[count,j] = Network.G.edges[(i,j)]['weight']
+             data[count,j+len(Network.G.nodes)] = Network.G.edges[(j,i)]['weight']
+    count += 1
+from sklearn import svm
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import tree
 
-model = LogisticRegression(class_weight={0: 1, 1: 80})
-model.fit(X, y)
+# =============================================================================
+# model = tree.DecisionTreeClassifier(max_depth=3)
+# model = KNeighborsClassifier(n_neighbors=3)
+# model = LogisticRegression()
+# =============================================================================
+
+model = svm.SVC(C=0.1,class_weight={0: 1, 1: 15})
+
+model.fit(data, y)
 
 # Making predictions
-predictions = model.predict(X)
-print(sum(predictions))
+predictions = model.predict(data)
+#print(sum(predictions))
 # Evaluating the model
 print("Confusion Matrix:\n", confusion_matrix(y, predictions))
 print("\nClassification Report:\n", classification_report(y, predictions))
+#tree.plot_tree(model)
 
 # =============================================================================
 # 
@@ -480,3 +538,13 @@ print("\nClassification Report:\n", classification_report(y, predictions))
 # 
 # =============================================================================
 
+##read data
+file_path = 'Data/hpvdata.csv'
+hpvdata = pd.read_csv(file_path)
+hpvdata = hpvdata.dropna(subset=['HPV_VAX_attitu_s35'])
+
+from scipy import stats
+
+stats.pointbiserialr(hpvdata['HPV_VAX_attitu_s35'], hpvdata['sec1_q9'])
+
+np.corrcoef(hpvdata['HPV_VAX_attitu_s35'],hpvdata['sec1_q8'])

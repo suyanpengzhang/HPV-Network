@@ -75,7 +75,7 @@ def social_connectivity(i,j):
     return 1
 
 ##read data
-file_path = 'hpvdata.csv'
+file_path = 'data/hpvdata.csv'
 hpvdata = pd.read_csv(file_path)
 hpvdata = hpvdata.dropna(subset=['HPV_VAX_attitu_s35'])
 #hpvdata = hpvdata.sample(30)
@@ -113,7 +113,9 @@ Network.add_attributes_to_nodes(df)
 Network.add_colors([12,24])
 Network.generate_di_graph(social_connectivity)
 Network.normalize_edge_weights()
-#pickle.dump(Network, open("simple_net.pkl", "wb"))
+# =============================================================================
+# pickle.dump(Network, open("network2.pkl", "wb"))
+# =============================================================================
 #Network.run_linear_threshold_model_soft(inital_threshold=[12,24],time_periods=20)
 for _lambda in np.arange(0,1.1,0.1):
     print(_lambda)
