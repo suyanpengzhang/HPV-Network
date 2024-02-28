@@ -141,9 +141,9 @@ class HPV_network(object):
                             score += newG.edges[(outnode,node)]['weight']
                         elif newG.nodes[outnode]['status']==-1:
                             score -= newG.edges[(outnode,node)]['weight']
-                if np.round(score-(threshold_pos-lambda_*threshold_pos*newG.nodes[node]['listen_score']),6) >= 0:
+                if np.round(score-(threshold_pos-lambda_*threshold_pos*newG.nodes[node]['listen_score']),8) >= 0:
                     pos.append(node)
-                if np.round(score-(threshold_neg+lambda_*threshold_neg*newG.nodes[node]['listen_score']),6) <=0 :
+                if np.round(score-(threshold_neg+lambda_*threshold_neg*newG.nodes[node]['listen_score']),8) <=0 :
                     neg.append(node)
             for node in pos:
                 newG.nodes[node]['status'] = 1
