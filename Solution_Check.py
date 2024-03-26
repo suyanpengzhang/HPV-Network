@@ -535,8 +535,8 @@ print("\nClassification Report:\n", classification_report(y, predictions))
 #     print('Mean current att among pos',np.mean(pos_age))
 #     print('Mean current att among neg',np.mean(neg_age))
 #     plt.show()
-# 
 # =============================================================================
+
 
 ##read data
 file_path = 'Data/hpvdata.csv'

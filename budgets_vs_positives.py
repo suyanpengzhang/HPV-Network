@@ -132,7 +132,7 @@ for i in range(num_nodes):
 #eigenvalues, eigenvectors = LA.eig(edge)
 threshold_pos = 8
 threshold_neg = -1
-lambda_ = 0.4
+lambda_ = 0.6
 
 T_plus = np.zeros(num_nodes)
 T_minus= np.zeros(num_nodes)
