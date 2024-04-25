@@ -78,8 +78,8 @@ max_stub = 4
 min_stub = 1
 
 num_household = len(hpvdata)
-for i in range(0,100):
-    network_name = 'network'+str(i)
+for ii in range(0,1):
+    network_name = 'network'+str(ii)
     with open("100_Network_Samples/"+network_name+".pkl", "rb") as file:
         Network = pickle.load(file)
     
@@ -195,7 +195,7 @@ for i in range(0,100):
         #lm.optimize(myheuristic)
         #lm.Params.MIPFocus = 0
         #lm.Params.NoRelHeurTime = 30
-        lm.setParam('TimeLimit', 288)
+        lm.setParam('TimeLimit', 60)
         lm.optimize()
         sol = []
         count=0
@@ -213,5 +213,7 @@ for i in range(0,100):
     except AttributeError:
         print('Encountered an attribute error')
     print('********************')    
-    with open("100_Network_Sols/sol_50_"+network_name+".pkl", 'wb') as f:
-        pickle.dump(sol, f)
+# =============================================================================
+#     with open("100_Network_Sols/sol_50_rho_0"+network_name+".pkl", 'wb') as f:
+#         pickle.dump(sol, f)
+# =============================================================================

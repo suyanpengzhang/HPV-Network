@@ -117,14 +117,15 @@ Network.normalize_edge_weights()
 # pickle.dump(Network, open("network2.pkl", "wb"))
 # =============================================================================
 #Network.run_linear_threshold_model_soft(inital_threshold=[12,24],time_periods=20)
-for _lambda in np.arange(0,1.1,0.1):
+for _lambda in np.arange(1.0,1.1,0.1):
+    _lambda=1.0
     print(_lambda)
-    data = np.zeros((len(np.arange(0,10.5,0.5)),len(np.arange(-5,0.5,0.5))))
+    data = np.zeros((len(np.arange(0,10.5,0.5)),len(np.arange(-5,0,0.5))))
     count_x = 0
     for pos_thre in np.arange(0,10.5,0.5):
         count_y = 0
-        for neg_thre in np.arange(-5,0.5,0.5):
-            Network.run_linear_threshold_model(lambda_ = _lambda,threshold_pos=pos_thre,threshold_neg=neg_thre,inital_threshold=[12,24],time_periods=5)
+        for neg_thre in np.arange(-5,0,0.5):
+            Network.run_linear_threshold_model(lambda_ = _lambda,threshold_pos=pos_thre,threshold_neg=neg_thre,inital_threshold=[12,24],time_periods=5,x=[])
             Gs = Network.LTM[-1]
             ls = np.array([Gs.nodes.data('status')[i] for i in Gs.nodes])
             mask_pos = np.where(ls==1)[0]
@@ -132,15 +133,17 @@ for _lambda in np.arange(0,1.1,0.1):
             data[count_x,count_y] = len(mask_pos)
             count_y += 1
         count_x += 1
-    fig = plt.figure(figsize = (6, 4),dpi=300)
-    plt.title('lambda = '+str(_lambda)+', Number of positive attitudes')
-    ax = sns.heatmap(data)
-    plt.xlabel("neg_threshold")
+    fig = plt.figure(figsize = (6, 4),dpi=600)
+    plt.title(r'$\rho$ = '+str(_lambda),fontsize=18)
+    ax = sns.heatmap(data,vmin=500)
+    plt.xlabel(r"$P^-$",fontsize=18)
     plt.xticks(np.arange(0,11,2),np.arange(-5,0.5,1))
-    plt.ylabel("pos_threshold")
+    plt.ylabel(r"$P^+$",fontsize=18)
     plt.yticks(np.arange(0,21,2),np.arange(0,10.5,1))
     ax.invert_yaxis()
+    plt.savefig('figures/rho1.eps', bbox_inches="tight", format='eps',dpi=600)
     plt.show()
+
 
 
 edge_weights =[]
@@ -158,6 +161,7 @@ plt.show()
 fig = plt.figure(figsize = (6, 4),dpi=600)
 
 plt.hist(edge_weights,bins=10, color ='maroon')
+
  
 plt.xlabel("score")
 plt.show()
@@ -179,3 +183,6 @@ for Gs in Network.LTM:
     #node_colors = [Gs.nodes.data('color')[i] for i in range(num_household)]
     #nx.draw_networkx(Gs, with_labels=True, node_color=node_colors)
     plt.show()
+
+
+

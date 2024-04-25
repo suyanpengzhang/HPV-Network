@@ -43,6 +43,12 @@ unselected_income =[]
 selected_residence =[]
 unselected_residence =[]
 
+shortest_length = []
+length = dict(nx.all_pairs_shortest_path_length(Network.G))
+for key in length.keys():
+    for key2 in length[key].keys():
+        shortest_length.append(length[key][key2]) 
+
 for i in range(len(income)):
     if i in soluniform:
         if income[i]>0:
