@@ -78,7 +78,7 @@ max_stub = 4
 min_stub = 1
 
 num_household = len(hpvdata)
-xbudgets = [5,10,20,30,40,50,60,70,80,90,100,120,140,160,180,200,230,260]
+xbudgets = [50]
 
 for ii in xbudgets:
     print(ii)
@@ -132,7 +132,7 @@ for ii in xbudgets:
                     edge[i,j] = Network.G.edges[(i,j)]['weight']
         #eigenvalues, eigenvectors = LA.eig(edge)
         threshold_pos = 8
-        threshold_neg = -1
+        threshold_neg = -2
         lambda_ = 0.6
         
         T_plus = np.zeros(num_nodes)
@@ -223,5 +223,5 @@ for ii in xbudgets:
         print('********************')    
         with open("temp_sol"+network_name+".pkl", 'wb') as f:
             pickle.dump(sol, f)
-    with open("100_Network_Sols/sol_50_greedy_budget"+str(ii)+".pkl", 'wb') as f:
+    with open("100_Network_Sols/sol_50_greedy_budget_minus2.pkl", 'wb') as f:
         pickle.dump(sol, f)
